@@ -1,6 +1,5 @@
-﻿local _, class = UnitClass("player")
-
-local dispellClass
+﻿local dispellClass
+local _, class = UnitClass("player")
 do
 	local t = {
 		["PRIEST"] = {
@@ -39,9 +38,9 @@ do
 	end
 end
 
-local numTabs, numTalents, BaS, nameTalent, currRank = GetNumTalentTabs()
+local numTabs, numTalents, BodyNSoul, nameTalent, currRank = GetNumTalentTabs()
 for t = 1, numTabs do
-	if BaS then
+	if BodyNSoul then
 		break
 	end
 	
@@ -49,7 +48,7 @@ for t = 1, numTabs do
     for i = 1, numTalents do
         nameTalent, _, _, _, currRank = GetTalentInfo(t, i)
 		if nameTalent == GetSpellInfo(64127) and currRank > 0 then
-			BaS = true
+			BodyNSoul = true
 			
 			break
 		end
