@@ -1,4 +1,4 @@
-﻿local dispellClass
+local dispellClass
 local _, class = UnitClass("player")
 do
 	local t = {
