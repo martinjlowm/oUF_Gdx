@@ -38,21 +38,23 @@ do
 	end
 end
 
-local numTabs, numTalents, BodyNSoul, nameTalent, currRank = GetNumTalentTabs()
-for t = 1, numTabs do
-	if BodyNSoul then
-		break
+local hasBodyAndSoul = function(unit, debuffType)
+	if debuffType ~= "Poison" or unit ~= "player" then
+		return false
 	end
-	
-	numTalents = GetNumTalents(t)
-    for i = 1, numTalents do
-        nameTalent, _, _, _, currRank = GetTalentInfo(t, i)
-		if nameTalent == GetSpellInfo(64127) and currRank > 0 then
-			BodyNSoul = true
-			
-			break
+ 
+	local numTabs, numTalents, BodyNSoul, talentName, currRank = GetNumTalentTabs()
+	for t = 1, numTabs do
+		numTalents = GetNumTalents(t)
+		for i = 1, numTalents do
+			talentName, _, _, _, rank = GetTalentInfo(t, i)
+			if talentName == GetSpellInfo(64127) and rank > 0 then
+				return true
+			end
 		end
-    end
+	end
+ 
+	return false
 end
 
 local dispellPriority = {
@@ -83,30 +85,34 @@ local debuffs = setmetatable({
 	[GetSpellInfo(70873)] = 10,	-- Emerald Vigor
 	
 	-- Blood-Queen Lana'thel
-	[GetSpellInfo(72649)] = 7,	-- Frenzied Bloodthirst
-	[GetSpellInfo(71473)] = 5,	-- Essence of the Blood Queen
-	[GetSpellInfo(71265)] = 10,	-- Swarming Shadows
-	[GetSpellInfo(71341)] = 10, -- Pact of the Darkfallen
+	[GetSpellInfo(72649)] = 5,	-- Frenzied Bloodthirst
+	[GetSpellInfo(71473)] = 3,	-- Essence of the Blood Queen
+	[GetSpellInfo(71265)] = 7,	-- Swarming Shadows
+	[GetSpellInfo(71341)] = 10,	-- Pact of the Darkfallen
 	
 	-- Professor Putricide
-	[GetSpellInfo(70447)] = 10,	-- Volatile Ooze Adhesive
-	[GetSpellInfo(70672)] = 10,	-- Gaseous Bloat
+	[GetSpellInfo(70447)] = 5,	-- Volatile Ooze Adhesive
+	[GetSpellInfo(70672)] = 5,	-- Gaseous Bloat
+	[GetSpellInfo(70911)] = 7,	-- Unbound Plague
+	[GetSpellInfo(73117)] = 10,	-- Plague Sickness
 	
 	-- Rotface
 	[GetSpellInfo(69674)] = 10,	-- Mutated Infection
+	[GetSpellInfo(72272)] = 10,	-- Vile Gas
 	
 	-- Festergut
 	[GetSpellInfo(69279)] = 10,	-- Gas Spore
 	
 	-- Deathbringer Saurfang
-	[GetSpellInfo(72293)] = 10, -- Mark of the Fallen Champion
+	[GetSpellInfo(72293)] = 10,	-- Mark of the Fallen Champion
+	[GetSpellInfo(72385)] = 7,	-- Boiling Blood
 	
 	-- Rotting Frost Giant
-	[GetSpellInfo(72865)] = 10, -- Death Plague
-	[GetSpellInfo(72884)] = 7, -- Recently Infected
+	[GetSpellInfo(72865)] = 10,	-- Death Plague
+	[GetSpellInfo(72884)] = 7,	-- Recently Infected
 	
 	-- Lady Deathwhisper
-	[GetSpellInfo(71001)] = 10, -- Death and Decay
+	[GetSpellInfo(71001)] = 10,	-- Death and Decay
 	
 	-- Lady Deathwhisper trash
 	[GetSpellInfo(69482)] = 10,	-- Dark Reckoning
@@ -250,17 +256,19 @@ f.UNIT_AURA = function(self, unit)
 	local name, rank, buffTexture, count, duration, expire, dtype, isPlayer
 	for i = 1, 40 do
 		name, rank, buffTexture, count, dtype, duration, expire, isPlayer = UnitAura(unit, i, "HARMFUL")
-		if not name then break end
-
+		if not name then
+			break
+		end
+		
 		if not cur or (debuffs[name] >= debuffs[cur]) then
 			if debuffs[name] > 0 and debuffs[name] > debuffs[cur or 1] then
 				cur = name
 				tex = buffTexture
-				dis = dtype or "none"
+				dis = dtype or "None"
 				timeLeft = expire
 				Duration = duration
 				stack = count > 1 and count or ""
-			elseif dtype and dtype ~= "none" then
+			elseif dtype and dtype ~= "None" then
 				if not dis or (dispellPriority[dtype] > dispellPriority[dis]) then
 					tex = buffTexture
 					dis = dtype
@@ -268,14 +276,18 @@ f.UNIT_AURA = function(self, unit)
 					Duration = duration
 					stack = count > 1 and count or ""
 				end
-			end	
+			end
 		end
 	end
 	
 	if dis then
-		if dispellClass[dis] or cur or ( dis == "Poison" and unit == "player" and BaS ) then
+		if dispellClass[dis] or cur or hasBodyAndSoul(unit, dis) then
 			local col = DebuffTypeColor[dis]
-			frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
+			if col then
+				frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
+			else
+				frame.DebuffIcon.Overlay:SetVertexColor(.8, .3, .1)
+			end
 			frame.Dispell = true
 			frame.DebuffIcon.Count:SetText(stack)
 			frame.DebuffIcon.Texture:SetTexture(tex)
@@ -304,7 +316,6 @@ local config = {
 	backdropEdge = [=[Interface\Addons\Guardix\media\backdropEdge]=],
 	backdropFill = [=[Interface\Addons\Guardix\media\WHITE64X64]=],
 	buttonTex = [=[Interface\Addons\Guardix\media\buttonTex]=],
-	bubbleTex = [=[Interface\Addons\Guardix\media\bubbleTex]=],
 	font = [=[Interface\Addons\Guardix\media\Russel Square LT.ttf]=],
 	aurafont = [=[Interface\Addons\Guardix\media\squares.ttf]=],
 	symbolfont = [=[Interface\Addons\Guardix\media\PIZZADUDEBULLETS.ttf]=],
@@ -1774,6 +1785,10 @@ local layout = function(self, unit)
 			rescomm:SetAllPoints(self)
 			rescomm:SetAlpha(.25)
 			
+			local texObject = rescomm:GetStatusBarTexture()
+			texObject:SetTexCoord(.06,.94,.06,.94)
+			texObject:SetHorizTile(true)
+			
 			rescomm.OthersOnly = true
 			self.ResComm = rescomm
 		end
@@ -1903,7 +1918,7 @@ local layout = function(self, unit)
 			
 		buffs:SetPoint(Buffs.Point[1], self, Buffs.Point[2], Buffs.Point[3], Buffs.Point[4])
 		buffs.initialAnchor = Buffs.Anchor
-		buffs["growth-y"] = Buffs.GrowthY	
+		buffs["growth-y"] = Buffs.GrowthY
 		buffs["growth-x"] = Buffs.GrowthX
 			
 		self.Buffs = buffs
@@ -1921,7 +1936,7 @@ local layout = function(self, unit)
 		
 		debuffs:SetPoint(Debuffs.Point[1], self, Debuffs.Point[2], Debuffs.Point[3], Debuffs.Point[4])
 		debuffs.initialAnchor = Debuffs.Anchor
-		debuffs["growth-y"] = Debuffs.GrowthY	
+		debuffs["growth-y"] = Debuffs.GrowthY
 		debuffs["growth-x"] = Debuffs.GrowthX
 		
 		self.Debuffs = debuffs
@@ -2104,10 +2119,10 @@ oUF:RegisterStyle("Guardix", layout)
 oUF:SetActiveStyle("Guardix")
 
 local player = oUF:Spawn("player")
-player:SetPoint("BOTTOM", UIParent, -250, 75)
+player:SetPoint("BOTTOM", UIParent, -225, 40)
 
 local target = oUF:Spawn("target")
-target:SetPoint("BOTTOM", UIParent, 250, 75)
+target:SetPoint("BOTTOM", UIParent, 225, 40)
 
 local pet = oUF:Spawn("pet")
 pet:SetPoint("BOTTOMRIGHT", player, "TOPLEFT", -15, 15)
@@ -2117,14 +2132,6 @@ focus:SetPoint("LEFT", target, "RIGHT", 50, 0)
 
 local targettarget = oUF:Spawn("targettarget")
 targettarget:SetPoint("BOTTOMLEFT", target, "TOPRIGHT", 15, 15)
-
-local raidFrame = CreateFrame("Frame", nil, UIParent)
-raidFrame:SetPoint("BOTTOM", UIParent, "BOTTOM", 0, 260)
-raidFrame:SetHeight(1)
-raidFrame:RegisterEvent("RAID_ROSTER_UPDATE")
-raidFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
-raidFrame:RegisterEvent("PARTY_MEMBERS_CHANGED")
-raidFrame:RegisterEvent("UNIT_PET")
 
 --[[
 	List of the various configuration attributes
@@ -2167,12 +2174,13 @@ raidHeader:SetManyAttributes(
 	"groupingOrder", "1,2,3,4,5,6,7,8",
 	"groupBy", "GROUP"
 )
-raidHeader:SetPoint("BOTTOMLEFT", raidFrame, "BOTTOMLEFT", 0, 0)
+raidHeader:SetPoint("CENTER", UIParent, "CENTER", 0, -275)
 raidHeader:Show()
 
 local petHeader = oUF:Spawn("header", "oUF_Pets", "SecureGroupPetHeaderTemplate")
 petHeader:SetManyAttributes(
 	"showPlayer", true,
+	"showRaid", true,
 	"ShowParty", true,
 	"yOffset", 5,
 	"xOffset", 5,
@@ -2182,39 +2190,8 @@ petHeader:SetManyAttributes(
 	"columnSpacing", 5,
 	"columnAnchorPoint", "LEFT"
 )
-petHeader:SetPoint("BOTTOMLEFT", raidFrame, "BOTTOMRIGHT", 5, 0)
+petHeader:SetPoint("BOTTOMLEFT", raidHeader, "BOTTOMRIGHT", 5, 0)
 petHeader:Show()
-
-local resizeRaidFrame = function(self)
-	if UnitAffectingCombat("player") then
-		if not self:IsEventRegistered("PLAYER_REGEN_ENABLED") then
-			self:RegisterEvent("PLAYER_REGEN_ENABLED")
-		end
-		return
-	else
-		if self:IsEventRegistered("PLAYER_REGEN_ENABLED") then
-			self:UnregisterEvent("PLAYER_REGEN_ENABLED")
-		end
-	end
-	
-	local frameWidth = 0
-	local numRaidMembers = GetNumRaidMembers()
-	local numPartyMembers = GetNumPartyMembers()
-	
-	if numRaidMembers > 0 then
-		frameWidth = math.ceil(numRaidMembers / 5) * (45 + 5) - 5
-	else
-		frameWidth = math.ceil(numPartyMembers / 5) * (45 + 5) - 5
-	end
-	
-	if frameWidth < 45 then
-		frameWidth = 45
-	end
-	
-	self:SetWidth(frameWidth)
-end
-
-raidFrame:SetScript("OnEvent", resizeRaidFrame)
 
 local prev
 for i = 1, 3 do
