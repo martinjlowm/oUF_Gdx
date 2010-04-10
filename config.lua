@@ -1,14 +1,13 @@
 ﻿local _, settings = ...
 
 local config = {
-	barTexture = [=[Interface\AddOns\Guardix\media\statusBarH]=],
-	backdropEdge = [=[Interface\Addons\Guardix\media\backdropEdge]=],
-	backdropFill = [=[Interface\Addons\Guardix\media\WHITE64X64]=],
-	buttonTex = [=[Interface\Addons\Guardix\media\buttonTex]=],
-	bubbleTex = [=[Interface\Addons\Guardix\media\bubbleTex]=],
-	font = [=[Interface\Addons\Guardix\media\Russel Square LT.ttf]=],
-	aurafont = [=[Interface\Addons\Guardix\media\squares.ttf]=],
-	symbolfont = [=[Interface\Addons\Guardix\media\PIZZADUDEBULLETS.ttf]=],
+	barTexture = [=[Interface\AddOns\oUF_Gdx\media\statusbar]=],
+	backdropEdge = [=[Interface\Addons\oUF_Gdx\media\backdropedge]=],
+	backdropFill = [=[Interface\ChatFrame\ChatFrameBackground]=],
+	buttonTex = [=[Interface\Addons\oUF_Gdx\media\buttonoverlay]=],
+	font = [=[Interface\Addons\Guardix\oUF_Gdx\Russel Square LT.ttf]=],
+	aurafont = [=[Interface\Addons\oUF_Gdx\media\squares.ttf]=],
+	symbolfont = [=[Interface\Addons\oUF_Gdx\media\PIZZADUDEBULLETS.ttf]=],
 	
 	["player"] = {
 		Dimensions = {
