@@ -1,4 +1,7 @@
-﻿local dispellClass
+﻿local _, settings = ...
+local config = settings.config
+
+local dispellClass
 local _, class = UnitClass("player")
 do
 	local t = {
@@ -29,7 +32,7 @@ do
 		["WARLOCK"] = {},
 		["WARRIOR"] = {},
 	}
-	if t[class] then
+	if (t[class]) then
 		dispellClass = {}
 		for k, v in pairs(t[class]) do
 			dispellClass[k] = v
@@ -40,14 +43,14 @@ end
 
 local numTabs, numTalents, BodyNSoul, nameTalent, currRank = GetNumTalentTabs()
 for t = 1, numTabs do
-	if BodyNSoul then
+	if (BodyNSoul) then
 		break
 	end
 	
 	numTalents = GetNumTalents(t)
-    for i = 1, numTalents do
-        nameTalent, _, _, _, currRank = GetTalentInfo(t, i)
-		if nameTalent == GetSpellInfo(64127) and currRank > 0 then
+	for i = 1, numTalents do
+		nameTalent, _, _, _, currRank = GetTalentInfo(t, i)
+		if (nameTalent == GetSpellInfo(64127) and currRank > 0) then
 			BodyNSoul = true
 			
 			break
@@ -86,11 +89,13 @@ local debuffs = setmetatable({
 	[GetSpellInfo(72649)] = 7,	-- Frenzied Bloodthirst
 	[GetSpellInfo(71473)] = 5,	-- Essence of the Blood Queen
 	[GetSpellInfo(71265)] = 10,	-- Swarming Shadows
-	[GetSpellInfo(71341)] = 10, -- Pact of the Darkfallen
+	[GetSpellInfo(71341)] = 10,	-- Pact of the Darkfallen
 	
 	-- Professor Putricide
-	[GetSpellInfo(70447)] = 10,	-- Volatile Ooze Adhesive
-	[GetSpellInfo(70672)] = 10,	-- Gaseous Bloat
+	[GetSpellInfo(70447)] = 7,	-- Volatile Ooze Adhesive
+	[GetSpellInfo(70672)] = 7,	-- Gaseous Bloat
+	[GetSpellInfo(72854)] = 10,	-- Unbound Plague
+	[GetSpellInfo(70953)] = 5,	-- Plague Sickness
 	
 	-- Rotface
 	[GetSpellInfo(69674)] = 10,	-- Mutated Infection
@@ -99,14 +104,14 @@ local debuffs = setmetatable({
 	[GetSpellInfo(69279)] = 10,	-- Gas Spore
 	
 	-- Deathbringer Saurfang
-	[GetSpellInfo(72293)] = 10, -- Mark of the Fallen Champion
+	[GetSpellInfo(72293)] = 10,	-- Mark of the Fallen Champion
 	
 	-- Rotting Frost Giant
-	[GetSpellInfo(72865)] = 10, -- Death Plague
-	[GetSpellInfo(72884)] = 7, -- Recently Infected
+	[GetSpellInfo(72865)] = 10,	-- Death Plague
+	[GetSpellInfo(72884)] = 7,	-- Recently Infected
 	
 	-- Lady Deathwhisper
-	[GetSpellInfo(71001)] = 10, -- Death and Decay
+	[GetSpellInfo(71001)] = 10,	-- Death and Decay
 	
 	-- Lady Deathwhisper trash
 	[GetSpellInfo(69482)] = 10,	-- Dark Reckoning
@@ -204,7 +209,7 @@ local debuffs = setmetatable({
 	[GetSpellInfo(19434)] = 8,	-- Aimed Shot
 	
 	-- Silence
-	[GetSpellInfo(18469)] = 11, -- Silenced - Improved Counterspell
+	[GetSpellInfo(18469)] = 11,	-- Silenced - Improved Counterspell
 	[GetSpellInfo(2139)] = 10,	-- Counterspell
 	
 	-- Disoriented
@@ -239,29 +244,31 @@ end)
 
 f.UNIT_AURA = function(self, unit)
 	local frame = oUF.units[unit]
-	if not frame or frame.unit ~= unit or not frame.DebuffIcon then
+	if (not frame or frame.unit ~= unit or not frame.DebuffIcon) then
 		return
 	end
 	
-	if frame:GetAttribute('unitsuffix') == 'pet' or frame:GetAttribute('unitsuffix') == 'target' then
+	if (frame:GetAttribute('unitsuffix') == 'pet' or frame:GetAttribute('unitsuffix') == 'target') then
 		return
 	end
 	local cur, tex, dis, timeLeft, Duration, stack
 	local name, rank, buffTexture, count, duration, expire, dtype, isPlayer
 	for i = 1, 40 do
 		name, rank, buffTexture, count, dtype, duration, expire, isPlayer = UnitAura(unit, i, "HARMFUL")
-		if not name then break end
+		if (not name) then
+			break
+		end
 
-		if not cur or (debuffs[name] >= debuffs[cur]) then
-			if debuffs[name] > 0 and debuffs[name] > debuffs[cur or 1] then
+		if (not cur or (debuffs[name] >= debuffs[cur])) then
+			if (debuffs[name] > 0 and debuffs[name] > debuffs[cur or 1]) then
 				cur = name
 				tex = buffTexture
 				dis = dtype or "none"
 				timeLeft = expire
 				Duration = duration
 				stack = count > 1 and count or ""
-			elseif dtype and dtype ~= "none" then
-				if not dis or (dispellPriority[dtype] > dispellPriority[dis]) then
+			elseif (dtype and dtype ~= "none") then
+				if (not dis or (dispellPriority[dtype] > dispellPriority[dis])) then
 					tex = buffTexture
 					dis = dtype
 					timeLeft = expire
@@ -272,8 +279,8 @@ f.UNIT_AURA = function(self, unit)
 		end
 	end
 	
-	if dis then
-		if dispellClass[dis] or cur or ( dis == "Poison" and unit == "player" and BaS ) then
+	if (dis) then
+		if (dispellClass[dis] or cur or ( dis == "Poison" and unit == "player" and BaS )) then
 			local col = DebuffTypeColor[dis]
 			frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
 			frame.Dispell = true
@@ -282,10 +289,10 @@ f.UNIT_AURA = function(self, unit)
 			frame.DebuffIcon:Show()
 			frame.RaidInfo:Hide()
 			
-			if Duration > 0 then
+			if (Duration > 0) then
 				frame.DebuffIcon.Cooldown:SetCooldown(timeLeft - Duration, Duration)
 			end
-		elseif frame.Dispell then
+		elseif (frame.Dispell) then
 			frame.Dispell = false
 			frame.DebuffIcon:Hide()
 			frame.RaidInfo:Show()
@@ -298,507 +305,6 @@ f.UNIT_AURA = function(self, unit)
 	end
 end
 f:RegisterEvent("UNIT_AURA")
-
-local config = {
-	barTexture = [=[Interface\AddOns\Guardix\media\statusBarH]=],
-	backdropEdge = [=[Interface\Addons\Guardix\media\backdropEdge]=],
-	backdropFill = [=[Interface\Addons\Guardix\media\WHITE64X64]=],
-	buttonTex = [=[Interface\Addons\Guardix\media\buttonTex]=],
-	bubbleTex = [=[Interface\Addons\Guardix\media\bubbleTex]=],
-	font = [=[Interface\Addons\Guardix\media\Russel Square LT.ttf]=],
-	aurafont = [=[Interface\Addons\Guardix\media\squares.ttf]=],
-	symbolfont = [=[Interface\Addons\Guardix\media\PIZZADUDEBULLETS.ttf]=],
-	
-	["player"] = {
-		Dimensions = {
-			Width = 230,
-			Height = 55,
-			Reverse = false,
-		},
-		Health = {
-			Size = 27,
-			Value = {
-				Point = {
-					"BOTTOMRIGHT",
-					"BOTTOMRIGHT",
-					-5,
-					5,
-				},
-				Justify = "RIGHT",
-			},
-			Smooth = true,
-		},
-		Power = {
-			Size = 8,
-			Value = {
-				Point = {
-					"BOTTOMLEFT",
-					"BOTTOMLEFT",
-					5,
-					5,
-				},
-				Justify = "LEFT",
-			},
-		},
-		Castbar = {
-			Size = 18,
-			Icon = {
-				"TOPRIGHT",
-				"LEFT",
-				-10,
-				10,
-			},
-		},
-		Enchant = {
-			Size = 26.5,
-			Point = {
-				"TOPRIGHT",
-				"TOPLEFT",
-				-3,
-				0,
-			},
-			Anchor = "TOPRIGHT",
-			GrowthY = "DOWN",
-			Spacing = 2,
-		},
-		Experience = {
-			Size = 18,
-		},
-		Buffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMLEFT",
-				"TOPLEFT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMLEFT",
-			GrowthY = "UP",
-			GrowthX = "RIGHT",
-			num = 24,
-			Spacing = 2,
-		},
-		Debuffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMRIGHT",
-				"TOPRIGHT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMRIGHT",
-			GrowthY = "UP",
-			GrowthX = "LEFT",
-			num = 8,
-			Spacing = 2,
-		},
-		Panel = {
-			Size = 20,
-			
-			DPS = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					5,
-				},
-			},
-		},
-		Combat = {
-			Size = 32,
-			Point = {
-				"CENTER",
-				"CENTER",
-				0,
-				15,
-			},
-		},
-		Leader = {
-			Size = 16,
-			Point = {
-				"CENTER",
-				"TOPLEFT",
-				0,
-				0,
-			},
-		},
-		MasterLooter = {
-			Size = 16,
-			Point = {
-				"CENTER",
-				"TOPLEFT",
-				16,
-				0,
-			},
-		},
-		Threat = true,
-	},
-	
-	["pet"] = {
-		Dimensions = {
-			Width = 115,
-			Height = 35,
-			Reverse = false,
-		},
-		Health = {
-			Size = 18,
-			Smooth = true,
-		},
-		Panel = {
-			Size = 17,
-			
-			Info = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					3.5,
-				},
-				Tag = "[GetNameColor][NameLong] [DiffColor][level] [shortclassification]",
-			},
-		},
-		Experience = {
-			Size = 18,
-		},
-		Debuffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMLEFT",
-				"TOPLEFT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMLEFT",
-			GrowthY = "UP",
-			GrowthX = "RIGHT",
-			num = 4,
-			Spacing = 2,
-		},
-	},
-	
-	["target"] = {
-		Dimensions = {
-			Width = 230,
-			Height = 55,
-			Reverse = true,
-		},
-		Health = {
-			Size = 27,
-			Value = {
-				Point = {
-					"BOTTOMLEFT",
-					"BOTTOMLEFT",
-					5,
-					5,
-				},
-				Justify = "LEFT",
-			},
-			Smooth = true,
-		},
-		Power = {
-			Size = 8,
-			Value = {
-				Point = {
-					"BOTTOMRIGHT",
-					"BOTTOMRIGHT",
-					-5,
-					5,
-				},
-				Justify = "RIGHT",
-			},
-		},
-		Castbar = {
-			Size = 18,
-			Icon = {
-				"TOPLEFT",
-				"RIGHT",
-				10,
-				10,
-			},
-		},
-		Buffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMRIGHT",
-				"TOPRIGHT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMRIGHT",
-			GrowthY = "UP",
-			GrowthX = "LEFT",
-			num = 8,
-			Spacing = 2,
-		},
-		Debuffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMLEFT",
-				"TOPLEFT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMLEFT",
-			GrowthY = "UP",
-			GrowthX = "RIGHT",
-			num = 24,
-			Spacing = 2,
-		},
-		Panel = {
-			Size = 20,
-			
-			Info = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					5,
-				},
-				Tag = "[GetNameColor][NameLong] [DiffColor][level] [shortclassification]",
-			},
-		},
-		Leader = {
-			Size = 16,
-			Point = {
-				"CENTER",
-				"TOPRIGHT",
-				0,
-				0,
-			},
-		},
-		MasterLooter = {
-			Size = 16,
-			Point = {
-				"CENTER",
-				"TOPRIGHT",
-				-16,
-				0,
-			},
-		},
-	},
-	
-	["targettarget"] = {
-		Dimensions = {
-			Width = 115,
-			Height = 35,
-			Reverse = true,
-		},
-		Health = {
-			Size = 18,
-			Smooth = true,
-		},
-		Panel = {
-			Size = 17,
-			Info = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					3.5,
-				},
-				Tag = "[GetNameColor][NameMedium]",
-			},
-		},
-		Debuffs = {
-			Size = 27,
-			Point = {
-				"BOTTOMRIGHT",
-				"TOPRIGHT",
-				0,
-				3,
-			},
-			Anchor = "BOTTOMRIGHT",
-			GrowthY = "UP",
-			GrowthX = "LEFT",
-			num = 4,
-			Spacing = 2,
-		},
-	},
-	
-	["focus"] = {
-		Dimensions = {
-			Width = 115,
-			Height = 35,
-			Reverse = true,
-		},
-		Health = {
-			Size = 16,
-			Smooth = true,
-		},
-		Power = {
-			Size = 2,
-		},
-		Panel = {
-			Size = 17,
-			Info = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					3.5,
-				},
-				Tag = "[GetNameColor][NameMedium]",
-			},
-		},
-		Castbar = {
-			Size = 18,
-			Icon = {
-				"TOPLEFT",
-				"RIGHT",
-				10,
-				10,
-			},
-		},
-	},
-	
-	["raid"] = {
-		Dimensions = {
-			Width = 45,
-			Height = 35,
-			Reverse = false,
-		},
-		Health = {
-			Orientation = "VERTICAL",
-			Size = 35,
-			HealComm = true,
-			ResComm = true,
-		},
-		RaidInfo = {
-			Point = {
-				"CENTER",
-				"CENTER",
-				0,
-				0,
-			},
-			Tag = "[GetNameColor][RaidHP]",
-			Justify = "CENTER",
-		},
-		Leader = {
-			Size = 8,
-			Point = {
-				"CENTER",
-				"TOPLEFT",
-				0,
-				0,
-			},
-		},
-		MasterLooter = {
-			Size = 8,
-			Point = {
-				"CENTER",
-				"TOPLEFT",
-				8,
-				0,
-			},
-		},
-		LFDRole = {
-			Size = 12,
-			Point = {
-				"CENTER",
-				"TOPRIGHT",
-				0,
-				0,
-			},
-		},
-		DebuffIcon = true,
-		Status = true,
-		Threat = true,
-	},
-	
-	["boss"] = {
-		Dimensions = {
-			Width = 230,
-			Height = 55,
-			Reverse = false,
-		},
-		Health = {
-			Size = 27,
-			Value = {
-				Point = {
-					"BOTTOMRIGHT",
-					"BOTTOMRIGHT",
-					-5,
-					5,
-				},
-				Justify = "RIGHT",
-			},
-			Smooth = true,
-		},
-		Power = {
-			Size = 8,
-			Value = {
-				Point = {
-					"BOTTOMLEFT",
-					"BOTTOMLEFT",
-					5,
-					5,
-				},
-				Justify = "LEFT",
-			},
-		},
-		Castbar = {
-			Size = 18,
-			Icon = {
-				"TOPLEFT",
-				"RIGHT",
-				10,
-				10,
-			},
-		},
-		Panel = {
-			Size = 20,
-			Info = {
-				Point = {
-					"BOTTOM",
-					"BOTTOM",
-					0,
-					5,
-				},
-				Tag = "[GetNameColor][NameLong]",
-			},
-		}
-	}
-}
-
--- --
--- Runebar options
--- --
-
-if class == "DEATHKNIGHT" then
-	config["player"].Runes = {
-		Point = {
-			"TOPLEFT",
-			"TOPLEFT",
-			0,
-			0,
-		},
-		Growth = "RIGHT",
-		Anchor = "TOPLEFT",
-		Size = 8,
-		Spacing = 0,
-		Colors = {
-			[1] = {.69,.31,.31},
-			[2] = {.69,.31,.31},
-			[3] = {.33,.59,.33},
-			[4] = {.33,.59,.33},
-			[5] = {.31,.45,.63},
-			[6] = {.31,.45,.63},
-		},
-	}
-end
-
-if class == "ROGUE" or class == "DRUID" then
-	config["target"].Combo = {
-		Point = {
-			"TOPRIGHT",
-			"TOPRIGHT",
-			0,
-			0,
-		},
-		Anchor = "TOPRIGHT",
-		Size = 8,
-	}
-end
 
 local colors = setmetatable({
 	power = setmetatable({
@@ -836,9 +342,9 @@ local menu = function(self)
 	local unit = self.unit:sub(1, -2)
 	local cunit = self.unit:gsub("(.)", string.upper, 1)
 	
-	if unit == "party" or unit == "partypet" then
+	if (unit == "party" or unit == "partypet") then
 		ToggleDropDownMenu(1, nil, _G["PartyMemberFrame"..self.id.."DropDown"], "cursor", 0, 0)
-	elseif _G[cunit.."FrameDropDown"] then
+	elseif (_G[cunit.."FrameDropDown"]) then
 		ToggleDropDownMenu(1, nil, _G[cunit.."FrameDropDown"], "cursor", 0, 0)
 	end
 end
@@ -848,41 +354,41 @@ end
 -- --
 
 local OnCastbarUpdate = function(self, elapsed)
-	if self.casting then
+	if (self.casting) then
 		local duration = self.ReverseGrowth and self.duration - elapsed or self.duration + elapsed
 		
-		if self.ReverseGrowth and duration <= 0 or duration >= self.max then
+		if (self.ReverseGrowth and duration <= 0 or duration >= self.max) then
 			self.casting = nil
 			self:Hide()
 
 			local parent = self:GetParent()
-			if parent.PostCastStop then
+			if (parent.PostCastStop) then
 				parent:PostCastStop('OnUpdate', parent.unit)
 			end
 
 			return
 		end
 
-		if self.SafeZone then
+		if (self.SafeZone) then
 			local width = self:GetWidth()
 			local _, _, ms = GetNetStats()
 			
 			local safeZonePercent = (width / self.max) * (ms / 1e5)
-			if safeZonePercent > 1 then
+			if (safeZonePercent > 1) then
 				safeZonePercent = 1
 			end
 			self.SafeZone:SetWidth(width * safeZonePercent)
 		end
 
-		if self.Time then
-			if self.delay ~= 0 then
-				if self.CustomDelayText then
+		if (self.Time) then
+			if (self.delay ~= 0) then
+				if (self.CustomDelayText) then
 					self:CustomDelayText(duration)
 				else
 					self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", duration, self.delay)
 				end
 			else
-				if self.CustomTimeText then
+				if (self.CustomTimeText) then
 					self:CustomTimeText(duration)
 				else
 					self.Time:SetFormattedText("%.1f", duration)
@@ -894,30 +400,30 @@ local OnCastbarUpdate = function(self, elapsed)
 		self:SetValue(duration)
 	
 
-		if self.Spark then
+		if (self.Spark) then
 			self.Spark:SetPoint("CENTER", self, "LEFT", (duration / self.max) * self:GetWidth(), 0)
 		end
-	elseif self.channeling then
+	elseif (self.channeling) then
 		local duration = self.ReverseGrowth and self.duration + elapsed or self.duration - elapsed
 		
-		if self.ReverseGrowth and duration >= self.max or duration <= 0 then
+		if (self.ReverseGrowth and duration >= self.max or duration <= 0) then
 			self.channeling = nil
 			self:Hide()
 
 			local parent = self:GetParent()
-			if parent.PostChannelStop then
+			if (parent.PostChannelStop) then
 				parent:PostChannelStop('OnUpdate', parent.unit)
 			end
 
 			return
 		end
 
-		if self.SafeZone then
+		if (self.SafeZone) then
 			local width = self:GetWidth()
 			local _, _, ms = GetNetStats()
 			
 			local safeZonePercent = (width / self.max) * (ms / 1e5)
-			if safeZonePercent > 1 then
+			if (safeZonePercent > 1) then
 				safeZonePercent = 1
 			end
 			
@@ -925,15 +431,15 @@ local OnCastbarUpdate = function(self, elapsed)
 		end
 
 
-		if self.Time then
-			if self.delay ~= 0 then
-				if self.CustomDelayText then
+		if (self.Time) then
+			if (self.delay ~= 0) then
+				if (self.CustomDelayText) then
 					self:CustomDelayText(duration)
 				else
 					self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", duration, self.delay)
 				end
 			else
-				if self.CustomTimeText then
+				if (self.CustomTimeText) then
 					self:CustomTimeText(duration)
 				else
 					self.Time:SetFormattedText("%.1f", duration)
@@ -943,13 +449,13 @@ local OnCastbarUpdate = function(self, elapsed)
 
 		self.duration = duration
 		self:SetValue(duration)
-		if self.Spark then
+		if (self.Spark) then
 			self.Spark:SetPoint("CENTER", self, "LEFT", (duration / self.max) * self:GetWidth(), 0)
 		end
 	else
 		self.unitName = nil
 		self.channeling = nil
-		if self.ReverseGrowth then
+		if (self.ReverseGrowth) then
 			self:SetValue(0)
 		else
 			self:SetValue(1)
@@ -959,12 +465,12 @@ local OnCastbarUpdate = function(self, elapsed)
 end
 
 local PostCastStart = function(self, event, unit, spell, spellrank, castid)
-	if self.unit ~= unit then
+	if (self.unit ~= unit) then
 		return
 	end
 	local castbar = self.Castbar
 	
-	if castbar.ReverseGrowth then
+	if (castbar.ReverseGrowth) then
 		local name, _, _, _, startTime, endTime = UnitCastingInfo(unit)
 		if not name then
 			castbar:Hide()
@@ -981,12 +487,12 @@ local PostCastStart = function(self, event, unit, spell, spellrank, castid)
 end
 
 local PostChannelStart = function(self, event, unit, name, rank, text, interrupt)
-	if self.unit ~= unit then
+	if (self.unit ~= unit) then
 		return
 	end
 	local castbar = self.Castbar
 	
-	if castbar.ReverseGrowth then
+	if (castbar.ReverseGrowth) then
 		local name, _, _, _, startTime, endTime = UnitChannelInfo(unit)
 		if not name then
 			castbar:Hide()
@@ -1003,23 +509,23 @@ local PostChannelStart = function(self, event, unit, name, rank, text, interrupt
 end
 
 local PostCastDelayed = function(self, event, unit, name, rank, text)
-	if self.unit ~= unit then
+	if (self.unit ~= unit) then
 		return
 	end
 
 	local name, rank, text, texture, startTime, endTime = UnitCastingInfo(unit)
-	if not startTime then
+	if (not startTime) then
 		return
 	end
 
 	local castbar = self.Castbar
 	local duration = castbar.ReverseGrowth and endTime / 1000 - GetTime() or GetTime() - (startTime / 1000)
 	
-	if duration < 0 then
+	if (duration < 0) then
 		duration = 0
 	end
 
-	if castbar.ReverseGrowth then
+	if (castbar.ReverseGrowth) then
 		castbar.delay = castbar.delay + castbar.duration + duration
 	else
 		castbar.delay = castbar.delay + castbar.duration - duration
@@ -1030,15 +536,15 @@ local PostCastDelayed = function(self, event, unit, name, rank, text)
 end
  
 local PostCastStop = function(self, event, unit)
-	if unit ~= self.unit then
+	if (unit ~= self.unit) then
 		return
 	end
 end
 
 local FormatCastbarTime = function(self, duration)
-	if self.channeling then
+	if (self.channeling) then
 		self.Time:SetFormattedText("%.1f ", duration)
-	elseif self.casting then
+	elseif (self.casting) then
 		self.Time:SetFormattedText("%.1f ", self.max - duration)
 	end
 end
@@ -1052,9 +558,9 @@ end
 -- --
 
 local ShortValue = function(value)
-	if value >= 1e6 then
+	if (value >= 1e6) then
 		return ("%.1fm"):format(value / 1e6):gsub("%.?0+([km])$", "%1")
-	elseif value >= 1e3 or value <= -1e3 then
+	elseif (value >= 1e3 or value <= -1e3) then
 		return ("%.1fk"):format(value / 1e3):gsub("%.?0+([km])$", "%1")
 	else
 		return value
@@ -1062,29 +568,29 @@ local ShortValue = function(value)
 end
 
 local PostUpdateHealth = function(self, event, unit, bar, min, max)
-	if not bar.value then
+	if (not bar.value) then
 		return
 	end
 		
-	if not UnitIsConnected(unit) then
+	if (not UnitIsConnected(unit)) then
 		bar:SetValue(0)
 		bar.value:SetText("|cffD7BEA5Offline|r")
-	elseif UnitIsDead(unit) then
+	elseif (UnitIsDead(unit)) then
 		bar.value:SetText("|cffD7BEA5Dead|r")
-	elseif UnitIsGhost(unit) then
+	elseif (UnitIsGhost(unit)) then
 		bar.value:SetText("|cffD7BEA5Ghost|r")
 	else
-		if min ~= max then
+		if (min ~= max) then
 			local r, g, b = oUF.ColorGradient(min/max, 0.69, 0.31, 0.31, 0.65, 0.63, 0.35, 0.33, 0.59, 0.33)
-			if unit == "player" and self:GetAttribute("normalUnit") ~= "pet" then
+			if (unit == "player" and self:GetAttribute("normalUnit") ~= "pet") then
 				bar.value:SetFormattedText("|cffAF5050%d|r |cffD7BEA5-|r |cff%02x%02x%02x%d%%|r", min, r * 255, g * 255, b * 255, floor(min / max * 100))
-			elseif unit == "target" then
+			elseif (unit == "target") then
 				bar.value:SetFormattedText("|cffAF5050%s|r |cffD7BEA5-|r |cff%02x%02x%02x%d%%|r", ShortValue(min), r * 255, g * 255, b * 255, floor(min / max * 100))
 			else
 				bar.value:SetFormattedText("|cff%02x%02x%02x%d%%|r", r * 255, g * 255, b * 255, floor(min / max * 100))
 			end
 		else
-			if unit ~= "player" and unit ~= "pet" then
+			if (unit ~= "player" and unit ~= "pet") then
 				bar.value:SetText("|cff559655"..ShortValue(max).."|r")
 			else
 				bar.value:SetText("|cff559655"..max.."|r")
@@ -1097,29 +603,29 @@ local OverrideUpdateHealth = function(self, event, unit, bar, min, max)
 	local r, g, b
 	local threat = UnitThreatSituation(unit)
 	local name, dtype
-	if unit == "player" and class == "PRIEST" then
+	if (unit == "player" and class == "PRIEST") then
 		for i = 1, 40 do
 			name, _, _, _, dtype = UnitAura(unit, i, "HARMFUL")
-			if not name then
+			if (not name) then
 				break
 			end
 			
-			if dtype == "Poison" then
+			if (dtype == "Poison") then
 				dtype = true
 				return
 			end
 		end
 	end
-	if dtype then
+	if (dtype) then
 		r, g, b = 80/255, 150/255, 80/255
-	elseif ( threat == 2 or threat == 3 ) and self.ThreatColor then
+	elseif (( threat == 2 or threat == 3 ) and self.ThreatColor) then
 		r, g, b = 153/255, 85/255, 85/255
 	else
 		r, g, b = self.ColorGradient(min / max, unpack(self.colors.smooth))
 	end
 	
-	if b then
-		if bar.ReverseGrowth then
+	if (b) then
+		if (bar.ReverseGrowth) then
 			bar:SetValue(max - min)
 			bar.bg:SetVertexColor(r, g, b)
 		else
@@ -1138,31 +644,31 @@ end
 -- --
 
 local PostUpdatePower = function(self, event, unit, bar, min, max)
-	if self.unit ~= "player" and self.unit ~= "pet" and self.unit ~= "target" or not bar.value then
+	if (self.unit ~= "player" and self.unit ~= "pet" and self.unit ~= "target" or not bar.value) then
 		return
 	end
 
 	local pType, pToken = UnitPowerType(unit)
 	local color = colors.power[pToken]
 
-	if color then
+	if (color) then
 		bar.value:SetTextColor(color[1], color[2], color[3])
 	end
 
-	if min == 0 then
+	if (min == 0) then
 		bar.value:SetText()
-	elseif not UnitIsPlayer(unit) and not UnitPlayerControlled(unit) or not UnitIsConnected(unit) then
+	elseif (not UnitIsPlayer(unit) and not UnitPlayerControlled(unit) or not UnitIsConnected(unit)) then
 		bar.value:SetText()
-	elseif UnitIsDead(unit) or UnitIsGhost(unit) then
+	elseif (UnitIsDead(unit) or UnitIsGhost(unit)) then
 		bar.value:SetText()
-	elseif min == max and (pType == 2 or pType == 3 and pToken ~= "POWER_TYPE_PYRITE") then
+	elseif (min == max and (pType == 2 or pType == 3 and pToken ~= "POWER_TYPE_PYRITE")) then
 		bar.value:SetText()
 	else
-		if min ~= max then
-			if pType == 0 then
-				if unit == "target" then
+		if (min ~= max) then
+			if (pType == 0) then
+				if (unit == "target") then
 					bar.value:SetFormattedText("%d%% |cffD7BEA5-|r %s", floor(min / max * 100), ShortValue(max - (max - min)))
-				elseif unit == "player" and self:GetAttribute("normalUnit") == "pet" or unit == "pet" then
+				elseif (unit == "player" and self:GetAttribute("normalUnit") == "pet" or unit == "pet") then
 					bar.value:SetFormattedText("%d%%", floor(min / max * 100))
 				else
 					bar.value:SetFormattedText("%d%% |cffD7BEA5-|r %d", floor(min / max * 100), max - (max - min))
@@ -1171,7 +677,7 @@ local PostUpdatePower = function(self, event, unit, bar, min, max)
 				bar.value:SetText(max - (max - min))
 			end
 		else
-			if unit == "pet" or unit == "target" then
+			if (unit == "pet" or unit == "target") then
 				bar.value:SetText(ShortValue(min))
 			else
 				bar.value:SetText(min)
@@ -1180,32 +686,32 @@ local PostUpdatePower = function(self, event, unit, bar, min, max)
 	end
 end
 
-local OverrideUpdatePower = function(self, event, unit, bar, min, max)	
+local OverrideUpdatePower = function(self, event, unit, bar, min, max)
 	local r, g, b, t
-	if bar.colorTapping and UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit) then
+	if (bar.colorTapping and UnitIsTapped(unit) and not UnitIsTappedByPlayer(unit)) then
 		t = self.colors.tapped
-	elseif bar.colorDisconnected and not UnitIsConnected(unit) then
+	elseif (bar.colorDisconnected and not UnitIsConnected(unit)) then
 		t = self.colors.disconnected
-	elseif bar.colorHappiness and unit == "pet" and GetPetHappiness() then
+	elseif (bar.colorHappiness and unit == "pet" and GetPetHappiness()) then
 		t = self.colors.happiness[GetPetHappiness()]
-	elseif bar.colorPower then
+	elseif (bar.colorPower) then
 		local _, ptype = UnitPowerType(unit)
 		t = self.colors.power[ptype]
-	elseif ( bar.colorClass and UnitIsPlayer(unit) ) or ( bar.colorClassNPC and not UnitIsPlayer(unit) ) or ( bar.colorClassPet and UnitPlayerControlled(unit) and not UnitIsPlayer(unit) ) then
+	elseif (bar.colorClass and UnitIsPlayer(unit) ) or ( bar.colorClassNPC and not UnitIsPlayer(unit) ) or ( bar.colorClassPet and UnitPlayerControlled(unit) and not UnitIsPlayer(unit)) then
 		local _, class = UnitClass(unit)
 		t = self.colors.class[class]
-	elseif(bar.colorReaction and UnitReaction(unit, 'player')) then
+	elseif (bar.colorReaction and UnitReaction(unit, 'player')) then
 		t = self.colors.reaction[UnitReaction(unit, "player")]
-	elseif(bar.colorSmooth) then
+	elseif (bar.colorSmooth) then
 		r, g, b = self.ColorGradient(min / max, unpack(bar.smoothGradient or self.colors.smooth))
 	end
 	
-	if t then
+	if (t) then
 		r, g, b = t[1], t[2], t[3]
 	end
 	
-	if b then
-		if bar.ReverseGrowth then
+	if (b) then
+		if (bar.ReverseGrowth) then
 			bar:SetValue(max - min)
 			bar.bg:SetVertexColor(r, g, b)
 		else
@@ -1250,7 +756,7 @@ local sort = function(a, b)
 end
  
 local PreAuraSetPosition = function(self, auras, max)
-	if self.unit == "player" then
+	if (self.unit == "player") then
 		table.sort(auras, sort)
 	end
 end
@@ -1258,7 +764,7 @@ end
 local PostUpdateAuraIcon = function(self, icons, unit, icon, index)
 	local _, _, _, _, _, _, _, unitCaster = UnitAura(unit, index, icon.filter)
 	
-	if unitCaster ~= "player" and unitCaster ~= "pet" and unitCaster ~= "vehicle" then
+	if (unitCaster ~= "player" and unitCaster ~= "pet" and unitCaster ~= "vehicle") then
 		if UnitIsEnemy("player", unit) then
 			if icon.debuff then
 				icon.icon:SetDesaturated(true)
@@ -1273,7 +779,7 @@ end
 local PostUpdateAura = function(self, event, unit)
 	local buffs, debuffs = self.Buffs, self.Debuffs
 	
-	if buffs then
+	if (buffs) then
 		local visibleBuffs = buffs.visibleBuffs
 		local size = buffs.size
 		local width = buffs:GetWidth()
@@ -1295,13 +801,13 @@ local PostUpdateAura = function(self, event, unit)
 end
 
 local updateTooltip = function(self)
-	if GameTooltip:IsOwned(self) then
+	if (GameTooltip:IsOwned(self)) then
 		GameTooltip:SetUnitAura(self.frame.unit, self:GetID(), self.filter)
 	end
 end
 
 local OnEnter = function(self)
-	if not self:IsVisible() then
+	if (not self:IsVisible()) then
 		return
 	end
 	
@@ -1348,7 +854,7 @@ local CreateAura = function(self, button, icons)
 	button.overlay.Hide = function(self)
 	end
 
-	if icons == self.Enchant then
+	if (icons == self.Enchant) then
 		button.overlay:SetVertexColor(0.33, 0.59, 0.33)
 	else
 		button:SetScript("OnEnter", OnEnter)
@@ -1363,7 +869,7 @@ end
 local UNIT_THREAT_SITUATION_UPDATE = function(self)
 	local bar = self.Health
 	local threat = UnitThreatSituation(self.unit)
-	if threat == 2 or threat == 3 then
+	if (threat == 2 or threat == 3) then
 		if bar.ReverseGrowth then
 			bar.bg:SetVertexColor(153/255, 85/255, 85/255)
 		else
@@ -1377,7 +883,7 @@ end
 
 local RAID_TARGET_UPDATE = function(self, event)
 	local index = GetRaidTargetIndex(self.unit)
-	if index then
+	if (index) then
 		self.RIcon:SetText(ICON_LIST[index].."22|t")
 	else
 		self.RIcon:SetText()
@@ -1385,7 +891,7 @@ local RAID_TARGET_UPDATE = function(self, event)
 end
 
 local UpdateCPoints = function(self, event, unit)
-	if unit == PlayerFrame.unit and unit ~= self.CPoints.unit then
+	if (unit == PlayerFrame.unit and unit ~= self.CPoints.unit) then
 		self.CPoints.unit = unit
 	end
 end
@@ -1411,17 +917,17 @@ local healingevents = {
 }
 
 local COMBAT_LOG_EVENT_UNFILTERED = function(self, _, _, eventtype, _, name, _, _, _, _, spellid, _, _, dmgorheal)
-	if damageevents[eventtype] then	
-		if name == pName then
-			if eventtype == "SWING_DAMAGE" then
+	if (damageevents[eventtype]) then
+		if (name == pName) then
+			if (eventtype == "SWING_DAMAGE") then
 				dmgorheal = spellid
 			end
 			
 			damagetotal = (damagetotal or 0) + dmgorheal
 		end
-	elseif healingevents[eventtype] then
-		if name == pName then
-			if eventtype == "SWING_HEAL" then
+	elseif (healingevents[eventtype]) then
+		if (name == pName) then
+			if (eventtype == "SWING_HEAL") then
 				dmgorheal = spellid
 			end
 			
@@ -1439,18 +945,18 @@ local PLAYER_REGEN_ENABLED = function(self)
 end
 
 local calculateDPSandHPS = function(self, elapsed)
-	if UnitAffectingCombat("player") then
+	if (UnitAffectingCombat("player")) then
 		time = (time or 0) + elapsed
 		
 		sumElapsed = sumElapsed + elapsed
-		if sumElapsed > 1 then
+		if (sumElapsed > 1) then
 			dps = (damagetotal or 0) / (time or 1)
 			hps = (healingtotal or 0) / (time or 1)
 			
-			if dps > (hps * .5) then
+			if (dps > (hps * .5)) then
 				self.Panel.DPS:SetText(string.format("%.1f DPS", dps))
 				self.Panel.DPS:SetTextColor(153/255, 85/255, 85/255)
-			elseif (hps * .5) > dps then
+			elseif ((hps * .5) > dps) then
 				self.Panel.DPS:SetText(string.format("%.1f HPS", hps))
 				self.Panel.DPS:SetTextColor(80/255, 150/255, 80/255)
 			end
@@ -1465,7 +971,7 @@ end
 -- --
 
 local layout = function(self, unit)
-	if unit then
+	if (unit) then
 		unit = unit:match("boss") and "boss" or unit
 	else
 		unit = "raid"
@@ -1502,7 +1008,7 @@ local layout = function(self, unit)
 	self:SetAttribute("*type2", "menu")
 	
 	local Panel = config[unit].Panel
-	if Panel then
+	if (Panel) then
 		local panel = CreateFrame("Frame", nil, self)
 		panel:SetFrameStrata("LOW")
 		panel:SetHeight(Panel.Size)
@@ -1519,7 +1025,7 @@ local layout = function(self, unit)
 		self.Panel = panel
 		
 		local Info = Panel.Info
-		if Info then
+		if (Info) then
 			local info = self.Panel:CreateFontString(nil, "OVERLAY")
 			info:SetFont(config.font, 12)
 			info:SetShadowColor(0, 0, 0)
@@ -1533,7 +1039,7 @@ local layout = function(self, unit)
 		end
 		
 		local Castbar = config[unit].Castbar
-		if Castbar then
+		if (Castbar) then
 			local cb = CreateFrame("StatusBar", nil, self)
 			cb:SetStatusBarTexture(config.barTexture)
 			cb:SetPoint("TOPLEFT", self.Panel, "TOPLEFT", 1, -1)
@@ -1638,7 +1144,7 @@ local layout = function(self, unit)
 	end
 	
 	local Runes = config[unit].Runes
-	if Runes then
+	if (Runes) then
 		self:SetAttribute('initial-height', self:GetAttribute('initial-height') + Runes.Size)
 		
 		local runes = CreateFrame('Frame', nil, self)
@@ -1667,7 +1173,7 @@ local layout = function(self, unit)
 	end
 	
 	local Combo = config[unit].Combo
-	if Combo then
+	if (Combo) then
 		self:SetAttribute('initial-height', self:GetAttribute('initial-height') + Combo.Size)
 		
 		local combo = CreateFrame("Frame", nil, self)
@@ -1704,7 +1210,7 @@ local layout = function(self, unit)
 	end
 	
 	local Health = config[unit].Health
-	if Health then
+	if (Health) then
 		local hp = CreateFrame("StatusBar", nil, self)
 		hp:SetStatusBarTexture(config.barTexture)
 		hp:SetHeight(Health.Size)
@@ -1791,7 +1297,7 @@ local layout = function(self, unit)
 	end
 	
 	local Power = config[unit].Power
-	if Power then
+	if (Power) then
 		local pp = CreateFrame("StatusBar", nil, self)
 		pp:SetHeight(Power.Size)
 		pp.Smooth = true
@@ -1842,7 +1348,7 @@ local layout = function(self, unit)
 	end
 	
 	local Enchant = IsAddOnLoaded("oUF_WeaponEnchant") and config[unit].Enchant
-	if Enchant then
+	if (Enchant) then
 		local enchant = CreateFrame("Frame", nil, self)
 		enchant:SetHeight(Enchant.Size * 2)
 		enchant:SetWidth(Enchant.Size)
@@ -1858,7 +1364,7 @@ local layout = function(self, unit)
 	end
 	
 	local Experience = IsAddOnLoaded("oUF_Experience") and config[unit].Experience
-	if Experience then
+	if (Experience) then
 		local xp = CreateFrame("StatusBar", nil, self)
 		xp:SetStatusBarTexture(config.barTexture)
 		xp:SetPoint("TOPLEFT", self.Panel, "TOPLEFT", 1, -1)
@@ -1897,7 +1403,7 @@ local layout = function(self, unit)
 	end
 	
 	local Buffs = config[unit].Buffs
-	if Buffs then
+	if (Buffs) then
 		local buffs = CreateFrame("Frame", nil, self)
 		buffs:SetHeight(Buffs.Size)
 		buffs:SetWidth(230)
@@ -1915,7 +1421,7 @@ local layout = function(self, unit)
 	end
 	
 	local Debuffs = config[unit].Debuffs
-	if Debuffs then
+	if (Debuffs) then
 		local debuffs = CreateFrame("Frame", nil, self)
 		debuffs:SetHeight(Debuffs.Size)
 		debuffs:SetWidth(230)
@@ -1932,7 +1438,7 @@ local layout = function(self, unit)
 		self.Debuffs = debuffs
 	end
 	
-	if Buffs or Debuffs then
+	if (Buffs or Debuffs) then
 		self.PreAuraSetPosition = PreAuraSetPosition
 		self.PostUpdateAura = PostUpdateAura
 		self.PostUpdateAuraIcon = PostUpdateAuraIcon
@@ -1941,7 +1447,7 @@ local layout = function(self, unit)
 	end
 	
 	local RaidInfo = config[unit].RaidInfo
-	if RaidInfo then
+	if (RaidInfo) then
 		local raidinfo = self:CreateFontString(nil, "OVERLAY")
 		raidinfo:SetFont(config.font, 14)
 		raidinfo:SetShadowColor(0, 0, 0)
@@ -1955,7 +1461,7 @@ local layout = function(self, unit)
 	end
 	
 	local Combat = config[unit].Combat
-	if Combat then
+	if (Combat) then
 		local combat = self:CreateTexture(nil, "OVERLAY")
 		combat:SetVertexColor(.7, .15, .15)
 		combat:SetHeight(Combat.Size)
@@ -1966,7 +1472,7 @@ local layout = function(self, unit)
 	end
 	
 	local Leader = config[unit].Leader
-	if Leader then
+	if (Leader) then
 		local leader = self:CreateTexture(nil, "OVERLAY")
 		leader:SetHeight(Leader.Size)
 		leader:SetWidth(Leader.Size)
@@ -1976,7 +1482,7 @@ local layout = function(self, unit)
 	end
 	
 	local MasterLooter = config[unit].MasterLooter
-	if MasterLooter then
+	if (MasterLooter) then
 		local masterlooter = self:CreateTexture(nil, 'OVERLAY')
 		masterlooter:SetHeight(MasterLooter.Size)
 		masterlooter:SetWidth(MasterLooter.Size)
@@ -1997,7 +1503,7 @@ local layout = function(self, unit)
 	table.insert(self.__elements, RAID_TARGET_UPDATE)
 	
 	local DebuffIcon = config[unit].DebuffIcon
-	if DebuffIcon then
+	if (DebuffIcon) then
 		local icon = CreateFrame("Frame", nil, self)
 		icon:SetPoint("CENTER")
 		icon:SetHeight(20)
@@ -2044,7 +1550,7 @@ local layout = function(self, unit)
 	end
 	
 	local Status = config[unit].Status
-	if Status then
+	if (Status) then
 		local auraStatus = self:CreateFontString(nil, "OVERLAY")
 		auraStatus:SetPoint("TOPLEFT", -2, 1)
 		auraStatus:SetFont(config.aurafont, 6, "THINOUTLINE")
@@ -2076,7 +1582,7 @@ local layout = function(self, unit)
 	end
 	
 	local LFDRole = config[unit].LFDRole
-	if LFDRole then
+	if (LFDRole) then
 		local role = self:CreateTexture(nil, "OVERLAY")
 		role:SetHeight(LFDRole.Size)
 		role:SetWidth(LFDRole.Size)
@@ -2085,7 +1591,7 @@ local layout = function(self, unit)
 		self.LFDRole = role
 	end
 	
-	if unit ~= "player" and unit ~= "boss" then
+	if (unit ~= "player" and unit ~= "boss") then
 		self.SpellRange = true
 		self.inRangeAlpha = 1
 		self.outsideRangeAlpha = .25
@@ -2095,12 +1601,12 @@ local layout = function(self, unit)
 	table.insert(self.__elements, 2, PostCastStop)
 	
 	local Threat = config[unit].Threat
-	if Threat then
+	if (Threat) then
 		self:RegisterEvent("UNIT_THREAT_SITUATION_UPDATE", UNIT_THREAT_SITUATION_UPDATE)
 		self.ThreatColor = true
 	end
 	
-	if unit ~= "raid" and unit ~= "boss" or self.unit and self.unit == "boss3" then
+	if (unit ~= "raid" and unit ~= "boss" or self.unit and self.unit == "boss3") then
 		config[unit] = nil
 	end
 end
