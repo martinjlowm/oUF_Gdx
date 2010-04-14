@@ -1,6 +1,16 @@
 ﻿local _, settings = ...
 local config = settings.config
 
+local gxMedia = gxMedia or {
+	auraFont = [=[Fonts\FRIZQT__.TTF]=],
+	bgFile = [=[Interface\ChatFrame\ChatFrameBackground]=],
+	buttonOverlay = [=[Interface\Buttons\UI-ActionButton-Border]=],
+	edgeFile = [=[Interface\Tooltips\UI-Tooltip-Border]=],
+	font = [=[Fonts\FRIZQT__.TTF]=],
+	statusBar = [=[Interface\TargetingFrame\UI-StatusBar]=],
+	symbolFont = [=[Fonts\FRIZQT__.TTF]=]
+}
+
 local dispellClass
 local _, class = UnitClass("player")
 do
@@ -80,7 +90,6 @@ local debuffs = setmetatable({
 	[GetSpellInfo(69762)] = 7,	-- Unchained Magic
 	[GetSpellInfo(69766)] = 5,	-- Instability
 	[GetSpellInfo(70126)] = 10,	-- Frost Beacon
-	[GetSpellInfo(70128)] = 3,	-- Mystic Buffet
 	
 	-- Valithria Dreamwalker
 	[GetSpellInfo(70873)] = 10,	-- Emerald Vigor
@@ -732,7 +741,7 @@ end
 local CustomAuraFilter = function(icons, unit, icon, name, rank, texture, count, dtype, duration, timeLeft, caster)
 	local isPlayer
 	
-	if(caster == 'player' or caster == 'vehicle') then
+	if (caster == 'player' or caster == 'vehicle') then
 		isPlayer = true
 	end
 	
@@ -741,7 +750,7 @@ local CustomAuraFilter = function(icons, unit, icon, name, rank, texture, count,
 		icon.owner = caster
 		
 		-- We set it to math.huge, because it lasts until cancelled.
-		if(timeLeft == 0) then
+		if (timeLeft == 0) then
 			icon.timeLeft = math.huge
 		else
 			icon.timeLeft = timeLeft
@@ -765,11 +774,11 @@ local PostUpdateAuraIcon = function(self, icons, unit, icon, index)
 	local _, _, _, _, _, _, _, unitCaster = UnitAura(unit, index, icon.filter)
 	
 	if (unitCaster ~= "player" and unitCaster ~= "pet" and unitCaster ~= "vehicle") then
-		if UnitIsEnemy("player", unit) then
-			if icon.debuff then
+		if (UnitIsEnemy("player", unit)) then
+			if (icon.debuff) then
 				icon.icon:SetDesaturated(true)
 			end
-			icon.overlay:SetVertexColor(1, 1, 1)
+			icon.overlay:SetVertexColor(.6, .6, .6)
 		end
 	else
 		icon.icon:SetDesaturated(false)
@@ -792,7 +801,7 @@ local PostUpdateAura = function(self, event, unit)
 		local point, relativeTo, relativePoint, xOfs = debuffs:GetPoint()
 		
 		debuffs:ClearAllPoints()
-		if visibleBuffs > 0 then
+		if (visibleBuffs > 0) then
 			debuffs:SetPoint(point, relativeTo, relativePoint, xOfs, (size + 2)*(height + 1) + 3)
 		else
 			debuffs:SetPoint(point, relativeTo, relativePoint, xOfs, 3)
@@ -827,8 +836,14 @@ local CreateAura = function(self, button, icons)
 	backdrop:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 4, -3.5)
 	backdrop:SetFrameStrata("BACKGROUND")
 	backdrop:SetBackdrop({
-		edgeFile = config.backdropEdge, edgeSize = 5,
-		insets = {left = 3, right = 3, top = 3, bottom = 3}
+		edgeFile = gxMedia.edgeFile,
+		edgeSize = 5,
+		insets = {
+			left = 3,
+			right = 3,
+			top = 3,
+			bottom = 3
+		}
 	})
 	backdrop:SetBackdropColor(0, 0, 0, 0)
 	backdrop:SetBackdropBorderColor(0, 0, 0)
@@ -842,14 +857,15 @@ local CreateAura = function(self, button, icons)
 	
 	button.count:SetPoint("BOTTOMRIGHT", -1, 2)
 	button.count:SetJustifyH("RIGHT")
-	button.count:SetFont(config.font, 10, "OUTLINE")
+	button.count:SetFont(gxMedia.font, 10, "OUTLINE")
 	button.count:SetTextColor(0.84, 0.75, 0.65)
 
 	icons.showDebuffType = true
 
-	button.overlay:SetTexture(config.buttonTex)
+	button.overlay:SetTexture(gxMedia.buttonOverlay)
 	button.overlay:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
 	button.overlay:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
+	button.overlay:SetVertexColor(.6,.6,.6)
 	button.overlay:SetTexCoord(0, 1, 0.02, 1)
 	button.overlay.Hide = function(self)
 	end
@@ -990,8 +1006,8 @@ local layout = function(self, unit)
 	backdrop:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 5, -5)
 	backdrop:SetFrameStrata("BACKGROUND")
 	backdrop:SetBackdrop({
-		bgFile = config.backdropFill,
-		edgeFile = config.backdropEdge,
+		bgFile = gxMedia.bgFile,
+		edgeFile = gxMedia.edgeFile,
 		edgeSize = 5,
 		insets = {
 			left = 5,
@@ -1015,8 +1031,8 @@ local layout = function(self, unit)
 		panel:SetPoint("BOTTOMLEFT", self, "BOTTOMLEFT", 0, 0)
 		panel:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", 0, 0)
 		panel:SetBackdrop({
-			bgFile = config.backdropFill,
-			edgeFile = config.backdropFill, 
+			bgFile = gxMedia.bgFile,
+			edgeFile = gxMedia.bgFile, 
 			edgeSize = 1,
 		})
 		panel:SetBackdropColor(0.1,0.1,0.1,1)
@@ -1027,7 +1043,7 @@ local layout = function(self, unit)
 		local Info = Panel.Info
 		if (Info) then
 			local info = self.Panel:CreateFontString(nil, "OVERLAY")
-			info:SetFont(config.font, 12)
+			info:SetFont(gxMedia.font, 12)
 			info:SetShadowColor(0, 0, 0)
 			info:SetShadowOffset(1.25, -1.25)
 			info:SetPoint(Info.Point[1], self, Info.Point[2], Info.Point[3], Info.Point[4])
@@ -1041,7 +1057,7 @@ local layout = function(self, unit)
 		local Castbar = config[unit].Castbar
 		if (Castbar) then
 			local cb = CreateFrame("StatusBar", nil, self)
-			cb:SetStatusBarTexture(config.barTexture)
+			cb:SetStatusBarTexture(gxMedia.statusBar)
 			cb:SetPoint("TOPLEFT", self.Panel, "TOPLEFT", 1, -1)
 			cb:SetPoint("BOTTOMRIGHT", self.Panel, "BOTTOMRIGHT", -1, 1)
 			cb:SetHeight(Castbar.Size)
@@ -1049,22 +1065,22 @@ local layout = function(self, unit)
 			
 			local bg = cb:CreateTexture(nil, "BACKGROUND")
 			bg:SetAllPoints(cb)
-			bg:SetTexture(config.barTexture)
+			bg:SetTexture(gxMedia.statusBar)
 			
 			local Reverse = config[unit].Dimensions.Reverse
 			if Reverse then
 				cb.ReverseGrowth = true
 				cb:SetStatusBarColor(.1, .1, .1)
-				cb:SetStatusBarTexture(config.backdropFill)
+				cb:SetStatusBarTexture(gxMedia.bgFile)
 				bg:SetVertexColor(.2, 1, 1)
 			else
 				cb:SetStatusBarColor(.2, 1, 1)
 				bg:SetVertexColor(.1, .1, .1)
-				bg:SetTexture(config.backdropFill)
+				bg:SetTexture(gxMedia.bgFile)
 			end
 			
 			local time = cb:CreateFontString(nil, "OVERLAY")
-			time:SetFont(config.font, 12)
+			time:SetFont(gxMedia.font, 12)
 			time:SetShadowColor(0, 0, 0)
 			time:SetShadowOffset(1.25, -1.25)
 			time:SetPoint("RIGHT", -2, .5)
@@ -1072,7 +1088,7 @@ local layout = function(self, unit)
 			time:SetJustifyH("RIGHT")
 			
 			local text = cb:CreateFontString(nil, "OVERLAY")
-			text:SetFont(config.font, 12)
+			text:SetFont(gxMedia.font, 12)
 			text:SetShadowColor(0, 0, 0)
 			text:SetShadowOffset(1.25, -1.25)
 			text:SetPoint("CENTER", 0, .5)
@@ -1087,16 +1103,22 @@ local layout = function(self, unit)
 			local overlay = cb:CreateTexture(nil, "OVERLAY")
 			overlay:SetPoint("TOPLEFT", icon, "TOPLEFT", -1.5, 1)
 			overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
-			overlay:SetTexture(config.buttonTex)
-			overlay:SetVertexColor(1, 1, 1)
+			overlay:SetTexture(gxMedia.buttonOverlay)
+			overlay:SetVertexColor(.6, .6, .6)
 			
 			local backdrop = CreateFrame("Frame", nil, self)
 			backdrop:SetPoint("TOPLEFT", icon, "TOPLEFT", -4, 3)
 			backdrop:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 3, -3.5)
 			backdrop:SetParent(cb)
 			backdrop:SetBackdrop({
-				edgeFile = config.backdropEdge, edgeSize = 4,
-				insets = {left = 3, right = 3, top = 3, bottom = 3}
+				edgeFile = gxMedia.edgeFile,
+				edgeSize = 4,
+				insets = {
+					left = 3,
+					right = 3,
+					top = 3,
+					bottom = 3
+				}
 			})
 			backdrop:SetBackdropColor(0, 0, 0, 0)
 			backdrop:SetBackdropBorderColor(0, 0, 0, 0.7)
@@ -1129,7 +1151,7 @@ local layout = function(self, unit)
 		local DPS = config[unit].Panel.DPS
 		if DPS then
 			local dps = self.Panel:CreateFontString(nil, "OVERLAY")
-			dps:SetFont(config.font, 12)
+			dps:SetFont(gxMedia.font, 12)
 			dps:SetShadowColor(0, 0, 0)
 			dps:SetShadowOffset(1.25, -1.25)
 			dps:SetPoint(DPS.Point[1], self, DPS.Point[2], DPS.Point[3], DPS.Point[4])
@@ -1152,7 +1174,7 @@ local layout = function(self, unit)
 		runes:SetHeight(Runes.Size)
 		runes:SetWidth(config[unit].Dimensions.Width)
 		runes:SetBackdrop({
-			bgFile = config.backdropFill
+			bgFile = gxMedia.bgFile
 		})
 		runes:SetBackdropColor(0.08, 0.08, 0.08)
 		runes.anchor = Runes.Anchor
@@ -1163,7 +1185,7 @@ local layout = function(self, unit)
 		
 		for i = 1, 6 do
 			local rune = CreateFrame('StatusBar', nil, runes)
-			rune:SetStatusBarTexture(config.barTexture)
+			rune:SetStatusBarTexture(gxMedia.statusBar)
 			rune:SetStatusBarColor(unpack(Runes.Colors[i]))
 			
 			runes[i] = rune
@@ -1180,7 +1202,7 @@ local layout = function(self, unit)
 		combo:SetHeight(Combo.Size)
 		combo:SetWidth(config[unit].Dimensions.Width)
 		combo:SetBackdrop({
-			bgFile = config.backdropFill
+			bgFile = gxMedia.bgFile
 		})
 		combo:SetBackdropColor(0.08, 0.08, 0.08)
 		combo:SetPoint(Combo.Point[1], self, Combo.Point[2], Combo.Point[3], Combo.Point[4])
@@ -1190,7 +1212,7 @@ local layout = function(self, unit)
 			tex = combo:CreateTexture(nil, "ARTWORK")
 			tex:SetHeight(Combo.Size)
 			tex:SetWidth(config[unit].Dimensions.Width / 5)
-			tex:SetTexture(config.barTexture)
+			tex:SetTexture(gxMedia.statusBar)
 			if i == 1 then
 				tex:SetPoint(Combo.Anchor)
 				tex:SetVertexColor(0.69, 0.31, 0.31)
@@ -1212,7 +1234,7 @@ local layout = function(self, unit)
 	local Health = config[unit].Health
 	if (Health) then
 		local hp = CreateFrame("StatusBar", nil, self)
-		hp:SetStatusBarTexture(config.barTexture)
+		hp:SetStatusBarTexture(gxMedia.statusBar)
 		hp:SetHeight(Health.Size)
 		if Health.Smooth then
 			hp.Smooth = true
@@ -1235,7 +1257,7 @@ local layout = function(self, unit)
 		
 		local bg = hp:CreateTexture(nil, "BACKGROUND")
 		bg:SetAllPoints(hp)
-		bg:SetTexture(config.barTexture)
+		bg:SetTexture(gxMedia.statusBar)
 		
 		local Reverse = config[unit].Dimensions.Reverse
 		if Reverse then
@@ -1249,7 +1271,7 @@ local layout = function(self, unit)
 		local Value = Health.Value
 		if Value then
 			local value = hp:CreateFontString(nil, "OVERLAY")
-			value:SetFont(config.font, 12)
+			value:SetFont(gxMedia.font, 12)
 			value:SetShadowColor(0, 0, 0)
 			value:SetShadowOffset(1.25, -1.25)
 			value:SetPoint(Value.Point[1], self, Value.Point[2], Value.Point[3], Value.Point[4])
@@ -1264,7 +1286,7 @@ local layout = function(self, unit)
 			local heal = CreateFrame('StatusBar', nil, hp)
 			heal:SetHeight(0)
 			heal:SetWidth(0)
-			heal:SetStatusBarTexture(config.barTexture)
+			heal:SetStatusBarTexture(gxMedia.statusBar)
 			heal:SetStatusBarColor(0, 1, 0, 0.4)
 			heal:SetPoint("BOTTOM", hp, "BOTTOM")
 			
@@ -1301,7 +1323,7 @@ local layout = function(self, unit)
 		local pp = CreateFrame("StatusBar", nil, self)
 		pp:SetHeight(Power.Size)
 		pp.Smooth = true
-		pp:SetStatusBarTexture(config.barTexture)
+		pp:SetStatusBarTexture(gxMedia.statusBar)
 		pp:SetFrameStrata("LOW")
 		
 		pp.frequentUpdates = true
@@ -1317,7 +1339,7 @@ local layout = function(self, unit)
 		
 		local bg = pp:CreateTexture(nil, "BORDER")
 		bg:SetAllPoints(pp)
-		bg:SetTexture(config.barTexture)
+		bg:SetTexture(gxMedia.statusBar)
 		
 		if config[unit].Dimensions.Reverse then
 			pp.ReverseGrowth = true
@@ -1330,7 +1352,7 @@ local layout = function(self, unit)
 		local Value = Power.Value
 		if Value then
 			local value = pp:CreateFontString(nil, "OVERLAY")
-			value:SetFont(config.font, 12)
+			value:SetFont(gxMedia.font, 12)
 			value:SetShadowColor(0, 0, 0)
 			value:SetShadowOffset(1.25, -1.25)
 			value:SetPoint(Value.Point[1], self, Value.Point[2], Value.Point[3], Value.Point[4])
@@ -1366,7 +1388,7 @@ local layout = function(self, unit)
 	local Experience = IsAddOnLoaded("oUF_Experience") and config[unit].Experience
 	if (Experience) then
 		local xp = CreateFrame("StatusBar", nil, self)
-		xp:SetStatusBarTexture(config.barTexture)
+		xp:SetStatusBarTexture(gxMedia.statusBar)
 		xp:SetPoint("TOPLEFT", self.Panel, "TOPLEFT", 1, -1)
 		xp:SetPoint("BOTTOMRIGHT", self.Panel, "BOTTOMRIGHT", -1, 1)
 		xp:SetHeight(Experience.Size)
@@ -1377,18 +1399,18 @@ local layout = function(self, unit)
 		
 		local bg = xp:CreateTexture(nil, "BACKGROUND")
 		bg:SetAllPoints(xp)
-		bg:SetTexture(config.barTexture)
+		bg:SetTexture(gxMedia.statusBar)
 		
 		local Reverse = config[unit].Dimensions.Reverse
 		if Reverse then
 			xp.ReverseGrowth = true
 			xp:SetStatusBarColor(.1, .1, .1)
-			xp:SetStatusBarTexture(config.backdropFill)
+			xp:SetStatusBarTexture(gxMedia.bgFile)
 			bg:SetVertexColor(.8, .2, .8)
 		else
 			xp:SetStatusBarColor(.8, .2, .8)
 			bg:SetVertexColor(.1, .1, .1)
-			bg:SetTexture(config.backdropFill)
+			bg:SetTexture(gxMedia.bgFile)
 		end
 		
 		xp:SetScript("OnEnter", function(self)
@@ -1449,7 +1471,7 @@ local layout = function(self, unit)
 	local RaidInfo = config[unit].RaidInfo
 	if (RaidInfo) then
 		local raidinfo = self:CreateFontString(nil, "OVERLAY")
-		raidinfo:SetFont(config.font, 14)
+		raidinfo:SetFont(gxMedia.font, 14)
 		raidinfo:SetShadowColor(0, 0, 0)
 		raidinfo:SetShadowOffset(1.25, -1.25)
 		raidinfo:SetPoint(RaidInfo.Point[1], self, RaidInfo.Point[2], RaidInfo.Point[3], RaidInfo.Point[4])
@@ -1493,7 +1515,7 @@ local layout = function(self, unit)
 	
 	local ricon = self:CreateFontString(nil, "OVERLAY")
 	ricon:SetPoint("CENTER", self, "TOP")
-	ricon:SetFont(config.font, 18)
+	ricon:SetFont(gxMedia.font, 18)
 	ricon:SetJustifyH("CENTER")
 	ricon:SetFontObject(GameFontNormalSmall)
 	ricon:SetTextColor(1, 1, 1)
@@ -1515,26 +1537,27 @@ local layout = function(self, unit)
 		iconTex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 		
 		local overlay = icon:CreateTexture(nil, "OVERLAY")
-		overlay:SetTexture(config.buttonTex)
+		overlay:SetTexture(gxMedia.buttonOverlay)
 		overlay:SetPoint("TOPLEFT", icon, "TOPLEFT", -2, 2)
 		overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 2, -2)
-		overlay:SetTexCoord(0, 1, 0.02, 1)
-		
-		local count = icon:CreateFontString(nil, "OVERLAY")
-		count:SetPoint("BOTTOMRIGHT", 0, 2)
-		count:SetJustifyH("RIGHT")
-		count:SetFont(config.font, 10, "OUTLINE")
-		count:SetTextColor(0.84, 0.75, 0.65)
+		overlay:SetTexCoord(.02, 1, .02, 1)
 		
 		local cooldown = CreateFrame("Cooldown", nil, icon)
-		cooldown:SetAllPoints(icon)
+		cooldown:SetPoint("TOPLEFT", icon, 1, -1)
+		cooldown:SetPoint("BOTTOMRIGHT", icon, -1, 1)
+		
+		local count = cooldown:CreateFontString(nil, "OVERLAY")
+		count:SetPoint("BOTTOMRIGHT", 0, 0)
+		count:SetJustifyH("RIGHT")
+		count:SetFont(gxMedia.font, 10, "OUTLINE")
+		count:SetTextColor(0.84, 0.75, 0.65)
 		
 		local backdrop = CreateFrame("Frame", nil, icon)
 		backdrop:SetPoint("TOPLEFT", icon, "TOPLEFT", -3.5, 3)
 		backdrop:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 4, -3.5)
 		backdrop:SetFrameStrata("LOW")
 		backdrop:SetBackdrop({
-			edgeFile = config.backdropEdge, edgeSize = 5,
+			edgeFile = gxMedia.edgeFile, edgeSize = 5,
 			insets = {left = 3, right = 3, top = 3, bottom = 3}
 		})
 		backdrop:SetBackdropColor(0, 0, 0, 0)
@@ -1553,14 +1576,14 @@ local layout = function(self, unit)
 	if (Status) then
 		local auraStatus = self:CreateFontString(nil, "OVERLAY")
 		auraStatus:SetPoint("TOPLEFT", -2, 1)
-		auraStatus:SetFont(config.aurafont, 6, "THINOUTLINE")
+		auraStatus:SetFont(gxMedia.auraFont, 6, "THINOUTLINE")
 		self:Tag(auraStatus, oUF.classIndicators[class]["TL"])
 		
 		self.AuraStatusTopLeft = auraStatus
 		
 		auraStatus = self:CreateFontString(nil, "OVERLAY")
 		auraStatus:SetPoint("TOPRIGHT", 3, 1)
-		auraStatus:SetFont(config.aurafont, 6, "THINOUTLINE")
+		auraStatus:SetFont(gxMedia.auraFont, 6, "THINOUTLINE")
 		self:Tag(auraStatus, oUF.classIndicators[class]["TR"])
 		
 		self.AuraStatusTopRight = auraStatus
@@ -1568,14 +1591,14 @@ local layout = function(self, unit)
 		auraStatus = self:CreateFontString(nil, "OVERLAY")
 		auraStatus:ClearAllPoints()
 		auraStatus:SetPoint("BOTTOMLEFT", -2, 1)
-		auraStatus:SetFont(config.aurafont, 6, "THINOUTLINE")
+		auraStatus:SetFont(gxMedia.auraFont, 6, "THINOUTLINE")
 		self:Tag(auraStatus, oUF.classIndicators[class]["BL"])
 		
 		self.AuraStatusBottomLeft = auraStatus
 
 		auraStatus = self:CreateFontString(nil, "OVERLAY")
 		auraStatus:SetPoint("CENTER", self, "BOTTOMRIGHT", 1, 1)
-		auraStatus:SetFont(config.symbolfont, 11, "THINOUTLINE")
+		auraStatus:SetFont(gxMedia.symbolFont, 11, "THINOUTLINE")
 		self:Tag(auraStatus, oUF.classIndicators[class]["BR"])
 		
 		self.AuraStatusBottomRight = auraStatus
