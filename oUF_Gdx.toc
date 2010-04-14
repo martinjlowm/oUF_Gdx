@@ -1,4 +1,4 @@
-﻿## Interface: 30300
+## Interface: 30300
 ## Title: oUF_Gdx
 ## Notes: oUF layout
 ## Author: Guardix
