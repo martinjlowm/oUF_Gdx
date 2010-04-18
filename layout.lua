@@ -1141,7 +1141,7 @@ local layout = function(self, unit)
 			self.PostCastDelayed = PostCastDelayed
 			self.OnCastbarUpdate = OnCastbarUpdate
 		end
-		if unit == "pet" and not Castbar then
+		if (unit == "pet" and not Castbar) then
 			PetCastingBarFrame:UnregisterAllEvents()
 			PetCastingBarFrame.Show = function()
 			end
@@ -1149,7 +1149,7 @@ local layout = function(self, unit)
 		end
 		
 		local DPS = config[unit].Panel.DPS
-		if DPS then
+		if (DPS) then
 			local dps = self.Panel:CreateFontString(nil, "OVERLAY")
 			dps:SetFont(gxMedia.font, 12)
 			dps:SetShadowColor(0, 0, 0)
@@ -1213,7 +1213,7 @@ local layout = function(self, unit)
 			tex:SetHeight(Combo.Size)
 			tex:SetWidth(config[unit].Dimensions.Width / 5)
 			tex:SetTexture(gxMedia.statusBar)
-			if i == 1 then
+			if (i == 1) then
 				tex:SetPoint(Combo.Anchor)
 				tex:SetVertexColor(0.69, 0.31, 0.31)
 			else
@@ -1236,14 +1236,14 @@ local layout = function(self, unit)
 		local hp = CreateFrame("StatusBar", nil, self)
 		hp:SetStatusBarTexture(gxMedia.statusBar)
 		hp:SetHeight(Health.Size)
-		if Health.Smooth then
+		if (Health.Smooth) then
 			hp.Smooth = true
 		end
 		hp:SetFrameStrata("LOW")
-		if Runes then
+		if (Runes) then
 			hp:SetPoint("TOPLEFT", self.Runes, "BOTTOMLEFT")
 			hp:SetPoint("TOPRIGHT", self.Runes, "BOTTOMRIGHT")
-		elseif Combo then
+		elseif (Combo) then
 			hp:SetPoint("TOPLEFT", self.CPoints, "BOTTOMLEFT")
 			hp:SetPoint("TOPRIGHT", self.CPoints, "BOTTOMRIGHT")
 		else
@@ -1251,7 +1251,7 @@ local layout = function(self, unit)
 			hp:SetPoint("TOPRIGHT")
 		end
 		hp.frequentUpdates = true
-		if Health.Orientation then
+		if (Health.Orientation) then
 			hp:SetOrientation(Health.Orientation)
 		end
 		
@@ -1260,7 +1260,7 @@ local layout = function(self, unit)
 		bg:SetTexture(gxMedia.statusBar)
 		
 		local Reverse = config[unit].Dimensions.Reverse
-		if Reverse then
+		if (Reverse) then
 			hp.ReverseGrowth = true
 			hp:SetStatusBarColor(.1,.1,.1)
 		else
@@ -1269,7 +1269,7 @@ local layout = function(self, unit)
 		end
 				
 		local Value = Health.Value
-		if Value then
+		if (Value) then
 			local value = hp:CreateFontString(nil, "OVERLAY")
 			value:SetFont(gxMedia.font, 12)
 			value:SetShadowColor(0, 0, 0)
@@ -1282,7 +1282,7 @@ local layout = function(self, unit)
 		end
 		
 		local HealComm = IsAddOnLoaded("oUF_HealComm4") and config[unit].Health.HealComm
-		if HealComm then
+		if (HealComm) then
 			local heal = CreateFrame('StatusBar', nil, hp)
 			heal:SetHeight(0)
 			heal:SetWidth(0)
@@ -1296,7 +1296,7 @@ local layout = function(self, unit)
 		end
 		
 		local ResComm = IsAddOnLoaded("oUF_ResComm") and config[unit].Health.ResComm
-		if ResComm then
+		if (ResComm) then
 			local rescomm = CreateFrame("StatusBar", nil, self)
 			rescomm:SetStatusBarTexture([=[Interface\Icons\Spell_Holy_Resurrection]=])
 			rescomm:SetAllPoints(self)
@@ -1350,7 +1350,7 @@ local layout = function(self, unit)
 		end
 		
 		local Value = Power.Value
-		if Value then
+		if (Value) then
 			local value = pp:CreateFontString(nil, "OVERLAY")
 			value:SetFont(gxMedia.font, 12)
 			value:SetShadowColor(0, 0, 0)
@@ -1402,7 +1402,7 @@ local layout = function(self, unit)
 		bg:SetTexture(gxMedia.statusBar)
 		
 		local Reverse = config[unit].Dimensions.Reverse
-		if Reverse then
+		if (Reverse) then
 			xp.ReverseGrowth = true
 			xp:SetStatusBarColor(.1, .1, .1)
 			xp:SetStatusBarTexture(gxMedia.bgFile)
