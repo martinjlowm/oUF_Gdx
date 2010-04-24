@@ -864,7 +864,8 @@ local CreateAura = function(self, button, icons)
 	button.cd:SetPoint("BOTTOMRIGHT", -2, 2)
 	button.cd:SetReverse(true)
 	
-	button.count:SetPoint("BOTTOMRIGHT", -1, 2)
+	button.count:SetParent(button.cd)
+	button.count:SetPoint("BOTTOMRIGHT", 2, -1)
 	button.count:SetJustifyH("RIGHT")
 	button.count:SetFont(gxMedia.font, 10, "OUTLINE")
 	button.count:SetTextColor(0.84, 0.75, 0.65)
@@ -1381,13 +1382,13 @@ local layout = function(self, unit)
 	local Enchant = IsAddOnLoaded("oUF_WeaponEnchant") and config[unit].Enchant
 	if (Enchant) then
 		local enchant = CreateFrame("Frame", nil, self)
-		enchant:SetHeight(Enchant.Size * 2)
-		enchant:SetWidth(Enchant.Size)
+		enchant:SetHeight(Enchant.Size)
+		enchant:SetWidth(Enchant.Size * 2)
 		enchant:SetPoint(Enchant.Point[1], self, Enchant.Point[2], Enchant.Point[3], Enchant.Point[4])
 		enchant.size = Enchant.Size
 		enchant.spacing = Enchant.Spacing
 		enchant.initialAnchor = Enchant.Anchor
-		enchant["growth-y"] = Enchant.GrowthY
+		enchant["growth-x"] = Enchant.GrowthX
 		
 		self.Enchant = enchant
 		

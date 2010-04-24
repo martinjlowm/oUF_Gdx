@@ -42,15 +42,15 @@ local config = {
 			},
 		},
 		Enchant = {
-			Size = 26.5,
+			Size = 27,
 			Point = {
-				"TOPRIGHT",
-				"TOPLEFT",
-				-3,
+				"TOP",
+				"BOTTOM",
 				0,
+				-3,
 			},
-			Anchor = "TOPRIGHT",
-			GrowthY = "DOWN",
+			Anchor = "BOTTOMLEFT",
+			GrowthX = "RIGHT",
 			Spacing = 2,
 		},
 		Experience = {
