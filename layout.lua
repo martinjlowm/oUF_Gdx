@@ -114,6 +114,7 @@ local debuffs = setmetatable({
 	
 	-- Deathbringer Saurfang
 	[GetSpellInfo(72293)] = 10,	-- Mark of the Fallen Champion
+	[GetSpellInfo(72385)] = 7,	-- Boiling Blood
 	
 	-- Rotting Frost Giant
 	[GetSpellInfo(72865)] = 10,	-- Death Plague
@@ -774,15 +775,27 @@ local PostUpdateAuraIcon = function(self, icons, unit, icon, index)
 	local _, _, _, _, _, _, _, unitCaster = UnitAura(unit, index, icon.filter)
 	
 	if (unitCaster ~= "player" and unitCaster ~= "pet" and unitCaster ~= "vehicle") then
-		if (UnitIsEnemy("player", unit)) then
+		if (not UnitIsFriend("player", unit)) then
 			if (icon.debuff) then
 				icon.icon:SetDesaturated(true)
+				icon.overlay:SetVertexColor(.6, .6, .6)
+				
+				return
 			end
+		else
 			icon.overlay:SetVertexColor(.6, .6, .6)
 		end
 	else
-		icon.icon:SetDesaturated(false)
+		if (UnitIsFriend("player", unit)) then
+			if (not icon.debuff) then
+				icon.overlay:SetVertexColor(.3, .6, .3)
+			else
+				icon.overlay:SetVertexColor(.6, .6, .6)
+			end
+		end
 	end
+	
+	icon.icon:SetDesaturated(false)
 end
 
 local PostUpdateAura = function(self, event, unit)
@@ -863,10 +876,10 @@ local CreateAura = function(self, button, icons)
 	icons.showDebuffType = true
 
 	button.overlay:SetTexture(gxMedia.buttonOverlay)
-	button.overlay:SetPoint("TOPLEFT", button, "TOPLEFT", -2, 2)
-	button.overlay:SetPoint("BOTTOMRIGHT", button, "BOTTOMRIGHT", 2, -2)
+	button.overlay:SetPoint("TOPLEFT", button, -1, 1)
+	button.overlay:SetPoint("BOTTOMRIGHT", button, 1, -1)
 	button.overlay:SetVertexColor(.6,.6,.6)
-	button.overlay:SetTexCoord(0, 1, 0.02, 1)
+	button.overlay:SetTexCoord(0, 0.98, 0, 0.98)
 	button.overlay.Hide = function(self)
 	end
 
@@ -1532,14 +1545,14 @@ local layout = function(self, unit)
 		icon:SetWidth(20)
 		icon:Hide()
 		
-		local iconTex = icon:CreateTexture(nil, "OVERLAY")
+		local iconTex = icon:CreateTexture(nil, "ARTWORK")
 		iconTex:SetAllPoints(icon)
 		iconTex:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 		
 		local overlay = icon:CreateTexture(nil, "OVERLAY")
 		overlay:SetTexture(gxMedia.buttonOverlay)
-		overlay:SetPoint("TOPLEFT", icon, "TOPLEFT", -2, 2)
-		overlay:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 2, -2)
+		overlay:SetPoint("TOPLEFT", icon, -1, 1)
+		overlay:SetPoint("BOTTOMRIGHT", icon, 1, -1)
 		overlay:SetTexCoord(.02, 1, .02, 1)
 		
 		local cooldown = CreateFrame("Cooldown", nil, icon)
