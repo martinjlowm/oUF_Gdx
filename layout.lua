@@ -782,6 +782,10 @@ local PostUpdateAuraIcon = function(self, icons, unit, icon, index)
 				
 				return
 			end
+		else
+			if (not icon.debuff) then
+				icon.overlay:SetVertexColor(.6, .6, .6)
+			end
 		end
 	else
 		if (UnitIsFriend("player", unit)) then
