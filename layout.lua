@@ -108,6 +108,7 @@ local debuffs = setmetatable({
 	
 	-- Rotface
 	[GetSpellInfo(69674)] = 10,	-- Mutated Infection
+	[GetSpellInfo(72272)] = 7,	-- Vile Gas
 	
 	-- Festergut
 	[GetSpellInfo(69279)] = 10,	-- Gas Spore
@@ -362,7 +363,7 @@ end
 -- --
 -- Castbar shit START
 -- --
-
+local soundPlayed
 local OnCastbarUpdate = function(self, elapsed)
 	if (self.casting) then
 		local duration = self.ReverseGrowth and self.duration - elapsed or self.duration + elapsed
@@ -416,6 +417,14 @@ local OnCastbarUpdate = function(self, elapsed)
 	elseif (self.channeling) then
 		local duration = self.ReverseGrowth and self.duration + elapsed or self.duration - elapsed
 		
+		-- temp
+		if (duration <= (self.max / 2) and not soundPlayed) then
+			PlaySoundFile("Sound\\interface\\RaidWarning.wav")
+			soundPlayed = true
+		elseif (duration >= (self.max / 2)) then
+			soundPlayed = false
+		end
+		
 		if (self.ReverseGrowth and duration >= self.max or duration <= 0) then
 			self.channeling = nil
 			self:Hide()
@@ -424,6 +433,7 @@ local OnCastbarUpdate = function(self, elapsed)
 			if (parent.PostChannelStop) then
 				parent:PostChannelStop('OnUpdate', parent.unit)
 			end
+			soundPlayed = false
 
 			return
 		end
@@ -463,6 +473,7 @@ local OnCastbarUpdate = function(self, elapsed)
 			self.Spark:SetPoint("CENTER", self, "LEFT", (duration / self.max) * self:GetWidth(), 0)
 		end
 	else
+		soundPlayed = false
 		self.unitName = nil
 		self.channeling = nil
 		if (self.ReverseGrowth) then
@@ -772,6 +783,10 @@ local PreAuraSetPosition = function(self, auras, max)
 end
 
 local PostUpdateAuraIcon = function(self, icons, unit, icon, index)
+	if (unit == "player" or unit == "pet") then
+		return
+	end
+	
 	local _, _, _, _, _, _, _, unitCaster = UnitAura(unit, index, icon.filter)
 	
 	if (unitCaster ~= "player" and unitCaster ~= "pet" and unitCaster ~= "vehicle") then
@@ -1443,6 +1458,8 @@ local layout = function(self, unit)
 		local buffs = CreateFrame("Frame", nil, self)
 		buffs:SetHeight(Buffs.Size)
 		buffs:SetWidth(230)
+		buffs:SetFrameLevel(self:GetFrameLevel() - 1)
+		buffs:SetFrameStrata(self:GetFrameStrata())
 		buffs.size = Buffs.Size
 		buffs.spacing = Buffs.Spacing
 		buffs.num = Buffs.num
@@ -1461,6 +1478,8 @@ local layout = function(self, unit)
 		local debuffs = CreateFrame("Frame", nil, self)
 		debuffs:SetHeight(Debuffs.Size)
 		debuffs:SetWidth(230)
+		debuffs:SetFrameLevel(self:GetFrameLevel() - 1)
+		debuffs:SetFrameStrata(self:GetFrameStrata())
 		debuffs.size = Debuffs.Size
 		debuffs.spacing = Debuffs.Spacing
 		debuffs.num = Debuffs.num
