@@ -229,7 +229,7 @@ local debuffs = setmetatable({
 	[GetSpellInfo(19503)] = 10,	-- Scatter Shot
 	
 	-- Crowd control effects
-	[GetSpellInfo(118)] = 7,	-- Polymorph
+	[GetSpellInfo(118)] = 10,	-- Polymorph
 	
 	-- Root effects
 	[GetSpellInfo(339)] = 7,	-- Entangling Roots
@@ -1458,8 +1458,7 @@ local layout = function(self, unit)
 		local buffs = CreateFrame("Frame", nil, self)
 		buffs:SetHeight(Buffs.Size)
 		buffs:SetWidth(230)
-		buffs:SetFrameLevel(self:GetFrameLevel() - 1)
-		buffs:SetFrameStrata(self:GetFrameStrata())
+		buffs:SetFrameStrata("LOW")
 		buffs.size = Buffs.Size
 		buffs.spacing = Buffs.Spacing
 		buffs.num = Buffs.num
@@ -1478,8 +1477,7 @@ local layout = function(self, unit)
 		local debuffs = CreateFrame("Frame", nil, self)
 		debuffs:SetHeight(Debuffs.Size)
 		debuffs:SetWidth(230)
-		debuffs:SetFrameLevel(self:GetFrameLevel() - 1)
-		debuffs:SetFrameStrata(self:GetFrameStrata())
+		debuffs:SetFrameStrata("LOW")
 		debuffs.size = Debuffs.Size
 		debuffs.spacing = Debuffs.Spacing
 		debuffs.num = Debuffs.num
