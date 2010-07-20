@@ -1,10 +1,10 @@
 ## Interface: 30300
 ## Title: oUF_Gdx
 ## Notes: oUF layout
+## Version: 1.0
 ## Author: Guardix
 ## RequiredDeps: oUF
 ## OptionalDeps: gxMedia, oUF_SpellRange, oUF_WeaponEnchant, oUF_HealComm4, oUF_Smooth, oUF_Experience, oUF_ResComm
 
-config.lua
-tags.lua
 layout.lua
+tags.lua

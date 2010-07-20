@@ -1,72 +1,63 @@
-oUF.TagEvents["[DiffColor]"] = "UNIT_LEVEL"
-if not oUF.Tags["[DiffColor]"] then
-	oUF.Tags["[DiffColor]"]  = function(unit)
-		local r, g, b
-		local level = UnitLevel(unit)
-		if level < 1 then
+if (not oUF) then
+	return
+end
+
+local _, settings = ...
+
+oUF.Tags["diffColor"] = function(unit)
+	local r, g, b
+	local level = UnitLevel(unit)
+	if (level < 1) then
+		r, g, b = 0.69, 0.31, 0.31
+	else
+		local levelDiff = UnitLevel("target") - UnitLevel("player")
+		if (levelDiff >= 5) then
 			r, g, b = 0.69, 0.31, 0.31
+		elseif (levelDiff >= 3) then
+			r, g, b = 0.71, 0.43, 0.27
+		elseif (levelDiff >= -2) then
+			r, g, b = 0.84, 0.75, 0.65
+		elseif (-levelDiff <= GetQuestGreenRange()) then
+			r, g, b = 0.33, 0.59, 0.33
 		else
-			local DiffColor = UnitLevel("target") - UnitLevel("player")
-			if DiffColor >= 5 then
-				r, g, b = 0.69, 0.31, 0.31
-			elseif DiffColor >= 3 then
-				r, g, b = 0.71, 0.43, 0.27
-			elseif DiffColor >= -2 then
-				r, g, b = 0.84, 0.75, 0.65
-			elseif -DiffColor <= GetQuestGreenRange() then
-				r, g, b = 0.33, 0.59, 0.33
-			else
-				r, g, b = 0.55, 0.57, 0.61
-			end
+			r, g, b = 0.55, 0.57, 0.61
 		end
+	end
+	
+	return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
+end
+oUF.TagEvents["diffColor"] = "UNIT_LEVEL"
+
+oUF.Tags["nameColor"] = function(unit)
+	local reaction = UnitReaction(unit, "player")
+	if (unit == "pet" and GetPetHappiness()) then
+		local c = oUF.colors.happiness[GetPetHappiness()]
+		return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
+	elseif (UnitIsPlayer(unit)) then
+		return oUF.Tags["raidcolor"](unit)
+	elseif (reaction) then
+		local c = oUF.colors.reaction[reaction]
+		return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
+	else
+		r, g, b = .84,.75,.65
 		return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
 	end
 end
+oUF.TagEvents["nameColor"] = "UNIT_HAPPINESS"
 
-local colors = setmetatable({
-	happiness = setmetatable({
-		[1] = {.69,.31,.31},
-		[2] = {.65,.63,.35},
-		[3] = {.33,.59,.33},
-	}, {
-		__index = oUF.colors.happiness
-	}),
-}, {
-	__index = oUF.colors
-})
-
-oUF.TagEvents["[GetNameColor]"] = "UNIT_HAPPINESS"
-if not oUF.Tags["[GetNameColor]"] then
-	oUF.Tags["[GetNameColor]"] = function(unit)
-		local reaction = UnitReaction(unit, "player")
-		if unit == "pet" and GetPetHappiness() then
-			local c = colors.happiness[GetPetHappiness()]
-			return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
-		elseif UnitIsPlayer(unit) then
-			return oUF.Tags["[raidcolor]"](unit)
-		elseif reaction then
-			local c =  colors.reaction[reaction]
-			return string.format("|cff%02x%02x%02x", c[1] * 255, c[2] * 255, c[3] * 255)
-		else
-			r, g, b = .84,.75,.65
-			return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
-		end
-	end
-end
-
-local numberize = function(val)
-	if val >= 1e6 then
-        return ("%.1fm"):format(val / 1e6)
-	elseif val >= 1e3 then
-		return ("%.1fk"):format(val / 1e3)
+local numberize = function(value)
+	if (value >= 1e6) then
+		return format("%.1fm", value / 1e6)
+	elseif (value >= 1e3) then
+		return format("%.1fk", value / 1e3)
 	else
-		return ("%d"):format(val)
+		return format("%d", value)
 	end
 end
 
 local utf8sub = function(string, i, dots)
 	local bytes = string:len()
-	if bytes <= i then
+	if (bytes <= i) then
 		return string
 	else
 		local len, pos = 0, 1
@@ -82,12 +73,12 @@ local utf8sub = function(string, i, dots)
 			elseif c >= 240 and c <= 247 then
 				pos = pos + 4
 			end
-			if len == i then
+			if (len == i) then
 				break
 			end
 		end
-
-		if len == i and pos <= bytes then
+		
+		if (len == i and pos <= bytes) then
 			return string:sub(1, pos - 1)..(dots and "..." or "")
 		else
 			return string
@@ -95,60 +86,143 @@ local utf8sub = function(string, i, dots)
 	end
 end
 
-oUF.TagEvents["[NameShort]"] = "UNIT_NAME_UPDATE"
-if not oUF.Tags["[NameShort]"] then
-	oUF.Tags["[NameShort]"] = function(unit)
-		local name = UnitName(unit)
-		return utf8sub(name, 6, false)
+
+oUF.Tags["shortName"] = function(unit)
+	local name = UnitName(unit)
+	return utf8sub(name, 6, false)
+end
+oUF.TagEvents["shortName"] = "UNIT_NAME_UPDATE"
+
+oUF.Tags["mediumName"] = function(unit)
+	local name = UnitName(unit)
+	if (unit == "pet" and name == "Unknown") then
+		return "Pet"
+	else
+		return utf8sub(name, 18, true)
+	end
+end
+oUF.TagEvents["mediumName"] = "UNIT_NAME_UPDATE"
+
+oUF.Tags["longName"] = function(unit)
+	local name = UnitName(unit)
+	return utf8sub(name, 36, true)
+end
+oUF.TagEvents["longName"] = "UNIT_NAME_UPDATE"
+
+oUF.Tags["raidHP"] = function(unit)
+	if (not unit) then
+		return
+	end
+	
+	local def = oUF.Tags["missinghp"](unit)
+	local per = oUF.Tags["perhp"](unit)
+	local result
+	if UnitIsDead(unit) then
+		result = "Dead"
+	elseif UnitIsGhost(unit) then
+		result = "Ghost"
+	elseif not UnitIsConnected(unit) then
+		result = "D/C"
+	elseif per < 90 and def then
+		result = "-"..numberize(def)
+	else
+		result = utf8sub(UnitName(unit), 4) or "N/A"
+	end
+	
+	return result
+end
+oUF.TagEvents["raidHP"] = "UNIT_NAME_UPDATE UNIT_HEALTH UNIT_MAXHEALTH"
+
+local ShortValue = function(value)
+	if (value >= 1e6) then
+		return ("%.1fm"):format(value / 1e6):gsub("%.?0+([km])$", "%1")
+	elseif (value >= 1e3 or value <= -1e3) then
+		return ("%.1fk"):format(value / 1e3):gsub("%.?0+([km])$", "%1")
+	else
+		return value
 	end
 end
 
-oUF.TagEvents["[NameMedium]"] = "UNIT_NAME_UPDATE"
-if not oUF.Tags["[NameMedium]"] then
-	oUF.Tags["[NameMedium]"] = function(unit)
-		local name = UnitName(unit)
-		if unit == "pet" and name == "Unknown" then
-			return "Pet"
+oUF.Tags["healthText"] = function(unit)
+	if (not unit) then
+		return
+	end
+	
+	local cur, max = UnitHealth(unit), UnitHealthMax(unit)
+	
+	if (not UnitIsConnected(unit)) then
+		result = "|cffD7BEA5Offline|r"
+	elseif (UnitIsDead(unit)) then
+		result = "|cffD7BEA5Dead|r"
+	elseif (UnitIsGhost(unit)) then
+		result = "|cffD7BEA5Ghost|r"
+	else
+		if (cur ~= max) then
+			local r, g, b = oUF.ColorGradient(cur/max, 0.69, 0.31, 0.31, 0.65, 0.63, 0.35, 0.33, 0.59, 0.33)
+			if (unit == "player" or unit:find("boss%d")) then
+				result = format("|cffAF5050%s|r |cffD7BEA5-|r |cff%02x%02x%02x%d%%|r", ShortValue(cur), r*255, g*255, b*255, floor(cur / max * 100))
+			else
+				result = format("|cff%02x%02x%02x%d%%|r |cffD7BEA5-|r |cffAF5050%s|r", r*255, g*255, b*255, floor(cur / max * 100), ShortValue(cur))
+			end
 		else
-			return utf8sub(name, 18, true)
+			result = "|cff559655"..max.."|r"
 		end
 	end
+	
+	return result
 end
+oUF.TagEvents["healthText"] = "UNIT_HEALTH UNIT_MAXHEALTH"
 
-oUF.TagEvents["[NameLong]"] = "UNIT_NAME_UPDATE"
-if not oUF.Tags["[NameLong]"] then
-	oUF.Tags["[NameLong]"] = function(unit)
-		local name = UnitName(unit)
-		return utf8sub(name, 36, true)
+local power = {
+	["MANA"] = {0.31, 0.45, 0.63},
+	["RAGE"] = {0.69, 0.31, 0.31},
+	["FOCUS"] = {0.71, 0.43, 0.27},
+	["ENERGY"] = {0.65, 0.63, 0.35},
+	["RUNES"] = {0.55, 0.57, 0.61},
+	["RUNIC_POWER"] = {0, 0.82, 1},
+	["AMMOSLOT"] = {0.8, 0.6, 0},
+	["FUEL"] = {0, 0.55, 0.5},
+	["POWER_TYPE_STEAM"] = {0.55, 0.57, 0.61},
+	["POWER_TYPE_PYRITE"] = {0.60, 0.09, 0.17}
+}
+
+oUF.Tags["powerText"] = function(unit)
+	if (not unit) then
+		return
 	end
-end
+	
+	local r, g, b, t
+	local cur, max = UnitPower(unit), UnitPowerMax(unit)
+	local pType, pToken = UnitPowerType(unit)
+	local t = power[pToken]
+	
+	if (t) then
+		r, g, b = t[1], t[2], t[3]
+	end
 
-oUF.TagEvents["[RaidHP]"] = "UNIT_NAME_UPDATE UNIT_HEALTH UNIT_MAXHEALTH"
-if not oUF.Tags["[RaidHP]"] then
-	oUF.Tags["[RaidHP]"] = function(unit)
-		if not unit then
-			return
-		end
-		
-		local def = oUF.Tags["[missinghp]"](unit)		
-		local per = oUF.Tags["[perhp]"](unit)
-		local result
-		if UnitIsDead(unit) then
-			result = "Dead"
-		elseif UnitIsGhost(unit) then
-			result = "Ghost"
-		elseif not UnitIsConnected(unit) then
-			result = "D/C"
-		elseif per < 90 and def then
-			result = "-"..numberize(def)
+	if (cur == 0) then
+		result = ""
+	elseif (not UnitIsPlayer(unit) and not UnitPlayerControlled(unit) or not UnitIsConnected(unit)) then
+		result = ""
+	elseif (UnitIsDead(unit) or UnitIsGhost(unit)) then
+		result = ""
+	elseif (cur == max and (pType == 2 or pType == 3 and pToken ~= "POWER_TYPE_PYRITE")) then
+		result = ""
+	else
+		if (cur ~= max and pType == 0) then
+			if (unit == "player" or unit:find("boss%d")) then
+				result = format("|cff%02x%02x%02x%d%% - %s|r", r*255, g*255, b*255, floor(cur / max * 100), ShortValue(max - (max - cur)))
+			else
+				result = format("|cff%02x%02x%02x%s - %d%%|r", r*255, g*255, b*255, ShortValue(max - (max - cur)), floor(cur / max * 100))
+			end
 		else
-			result = utf8sub(UnitName(unit), 4) or "N/A"
+			result = format("|cff%02x%02x%02x%s|r", r*255, g*255, b*255, cur)
 		end
-		
-		return result
 	end
+	
+	return result
 end
-
+oUF.TagEvents["powerText"] = "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_MAXRUNIC_POWER UNIT_RUNIC_POWER"
 
 local L = {
 	["Prayer of Mending"] = GetSpellInfo(33076),
@@ -181,224 +255,297 @@ local L = {
 	["Riptide"] = GetSpellInfo(61301),
 	["Flash of Light"] = GetSpellInfo(66922)
 }
-local x = "M"
 
-local getTime = function(expirationTime)
-	if expirationTime > 0 then
-		local timeleft = format("%.0f",-1*(GetTime()-expirationTime))
-		local spellTimer = "|cffffff00"..timeleft.."|r"
-		return spellTimer
+local _, class = UnitClass("player")
+	-- PRIEST
+if (class == "PRIEST") then
+	local PoMCount = {
+		"i",
+		"h",
+		"g",
+		"f",
+		"Z",
+		"Y"
+	}
+	oUF.Tags["PoM"] = function(unit)
+		local _, _, _, count = UnitAura(unit, L["Prayer of Mending"])
+		if (count) then
+			return "|cffFFCF7F"..PoMCount[count].."|r"
+		end
 	end
+	oUF.TagEvents["PoM"] = "UNIT_AURA"
 	
-	return 0
-end
-
--- Priest
-oUF.pomCount = {"i","h","g","f","Z","Y"}
-oUF.Tags["[pom]"] = function(u) local c = select(4, UnitAura(u, L["Prayer of Mending"])) if c then return "|cffFFCF7F"..oUF.pomCount[c].."|r" end end
-oUF.TagEvents["[pom]"] = "UNIT_AURA"
-oUF.Tags["[gotn]"] = function(u) if UnitAura(u, L["Gift of the Naaru"]) then return "|cff33FF33"..x.."|r" end end
-oUF.TagEvents["[gotn]"] = "UNIT_AURA"
-oUF.Tags["[rnw]"] = function(u)
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Renew"])
-  if not (fromwho == "player") then return end
-  if UnitAura(u, L["Renew"]) then return "|cff33FF33"..x.."|r" end end
-oUF.TagEvents["[rnw]"] = "UNIT_AURA"
-
-oUF.Tags["[ad]"] = function(u)
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, "Abolish Disease")
-  if not (fromwho == "player") then return end
-  if UnitAura(u, "Abolish Disease") then return "|cffFFFF33"..x.."|r" end end
-oUF.TagEvents["[ad]"] = "UNIT_AURA"
-
--- rnwtime
-oUF.Tags["[rnwTime]"] = function(u)
-  local name, _,_,_,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Renew"])
-  if (fromwho == "player") then return getTime(expirationTime) end 
-end
-oUF.TagEvents["[rnwTime]"] = "UNIT_AURA"
-oUF.Tags["[pws]"] = function(u) if UnitAura(u, L["Power Word: Shield"]) then return "|cff33FF33"..x.."|r" end end
-oUF.TagEvents["[pws]"] = "UNIT_AURA"
-oUF.Tags["[ws]"] = function(u) if UnitDebuff(u, L["Weakened Soul"]) then return "|cffFF9900"..x.."|r" end end
-oUF.TagEvents["[ws]"] = "UNIT_AURA"
-oUF.Tags["[fw]"] = function(u) if UnitAura(u, L["Fear Ward"]) then return "|cff8B4513"..x.."|r" end end
-oUF.TagEvents["[fw]"] = "UNIT_AURA"
-oUF.Tags["[sp]"] = function(u) local c = UnitAura(u, L["Prayer of Shadow Protection"]) or UnitAura(u, "Shadow Protection") if not c then return "|cff9900FF"..x.."|r" end end
-oUF.TagEvents["[sp]"] = "UNIT_AURA"
-oUF.Tags["[fort]"] = function(u) local c = UnitAura(u, L["Prayer of Fortitude"]) or UnitAura(u, L["Power Word: Fortitude"]) if not c then return "|cff00A1DE"..x.."|r" end end
-oUF.TagEvents["[fort]"] = "UNIT_AURA"
-oUF.Tags["[ds]"] = function(u) local c = UnitAura(u, L["Prayer of Spirit"]) or UnitAura(u, L["Divine Spirit"]) if not c then return "|cffffff00"..x.."|r" end end
-oUF.TagEvents["[ds]"] = "UNIT_AURA"
-
---druid
-oUF.lbCount = { 4, 2, 3 }
-oUF.Tags["[lb]"] = function(u) 
-	local name, _,_, c,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Lifebloom"])
-	if not (fromwho == "player") then return end
-	local spellTimer = GetTime()-expirationTime
-	if spellTimer > -2 then
-		return "|cffFF0000"..oUF.lbCount[c].."|r"
-	else
-		return "|cffA7FD0A"..oUF.lbCount[c].."|r"
+	oUF.Tags["GotN"] = function(unit)
+		if (UnitAura(unit, L["Gift of the Naaru"])) then
+			return "|cff33FF33M|r"
+		end
 	end
-end
-oUF.TagEvents["[lb]"] = "UNIT_AURA"
-oUF.Tags["[rejuv]"] = function(u) 
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Rejuvenation"])
-  if not (fromwho == "player") then return end
-  if UnitAura(u, L["Rejuvenation"]) then return "|cff00FEBF"..x.."|r" end end
-oUF.TagEvents["[rejuv]"] = "UNIT_AURA"
--- rejuvtime
-oUF.Tags["[rejuvTime]"] = function(u)
-  local name, _,_,_,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Rejuvenation"])
-  if (fromwho == "player") then return getTime(expirationTime) end 
-end
-oUF.TagEvents["[rejuvTime]"] = "UNIT_AURA"
-oUF.Tags["[regrow]"] = function(u) if UnitAura(u, L["Regrowth"]) then return "|cff00FF10"..x.."|r" end end
-oUF.TagEvents["[regrow]"] = "UNIT_AURA"
-oUF.Tags["[wg]"] = function(u) if UnitAura(u, L["Wild Growth"]) then return "|cff33FF33"..x.."|r" end end
-oUF.TagEvents["[wg]"] = "UNIT_AURA"
-oUF.Tags["[tree]"] = function(u) if UnitAura(u, L["Tree of Life"]) then return "|cff33FF33"..x.."|r" end end
-oUF.TagEvents["[tree]"] = "UNIT_AURA"
-oUF.Tags["[gotw]"] = function(u) local c = UnitAura(u, L["Gift of the Wild"]) or UnitAura(u, L["Mark of the Wild"]) if not c then return "|cffFF00FF"..x.."|r" end end
-oUF.TagEvents["[gotw]"] = "UNIT_AURA"
-
---warrior
-oUF.Tags["[Bsh]"] = function(u) if UnitAura(u, L["Battle Shout"]) then return "|cffff0000"..x.."|r" end end
-oUF.TagEvents["[Bsh]"] = "UNIT_AURA"
-oUF.Tags["[Csh]"] = function(u) if UnitAura(u, L["Commanding Shout"]) then return "|cffffff00"..x.."|r" end end
-oUF.TagEvents["[Csh]"] = "UNIT_AURA"
-oUF.Tags["[vigil]"] = function(u)
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Vigilance"])
-  if not (fromwho == "player") then return end
-  if UnitAura(u, L["Vigilance"]) then return "|cffDEB887"..x.."|r" end end
-oUF.TagEvents["[vigil]"] = "UNIT_AURA"
-
---deathknight
-oUF.Tags["[how]"] = function(u) if UnitAura(u, L["Horn of Winter"]) then return "|cffffff10"..x.."|r" end end
-oUF.TagEvents["[how]"] = "UNIT_AURA"
-
---mage
-oUF.Tags["[mc]"] = function(u) if UnitAura(u, L["Magic Concentration"]) then return "|cffffff00"..x.."|r" end end
-oUF.TagEvents["[mc]"] = "UNIT_AURA"
-
---paladin
-oUF.Tags["[sacred]"] = function(u) if UnitAura(u, L["Sacred Shield"]) then return "|cffffff10"..x.."|r" end end
-oUF.TagEvents["[sacred]"] = "UNIT_AURA"
-oUF.Tags["[beacon]"] = function(u) if UnitAura(u, L["Beacon of Light"]) then return "|cffffff10"..x.."|r" end end
-oUF.TagEvents["[beacon]"] = "UNIT_AURA"
-oUF.Tags["[selfsacred]"] = function(u)
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Sacred Shield"])
-  if not (fromwho == "player") then return end
-  if UnitAura(u, L["Sacred Shield"]) then return "|cffff33ff"..x.."|r" end end
-oUF.TagEvents["[selfsacred]"] = "UNIT_AURA"
-oUF.Tags["[selfbeacon]"] = function(u)
-  local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Beacon of Light"])
-  if not (fromwho == "player") then return end
-  if UnitAura(u, L["Beacon of Light"]) then return "|cffff33ff"..x.."|r" end end
-oUF.TagEvents["[selfbeacon]"] = "UNIT_AURA"
-oUF.Tags["[beaconTime]"] = function(u)
-  local name, _,_,_,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Beacon of Light"])
-  if (fromwho == "player") then return getTime(expirationTime) end 
-end
-oUF.TagEvents["[beaconTime]"] = "UNIT_AURA"
-oUF.Tags["[FoLTime]"] = function(u)
-  local name, _,_,_,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Flash of Light"])
-  if (fromwho == "player") then return getTime(expirationTime) end 
-end
-oUF.TagEvents["[FoLTime]"] = "UNIT_AURA"
-
---shaman
-oUF.Tags["[rip]"] = function(u) 
-	local name, _,_,_,_,_,_, fromwho,_ = UnitAura(u, L["Riptide"])
-	if not (fromwho == "player") then return end
-	if UnitAura(u, L["Riptide"]) then return "|cff00FEBF"..x.."|r" end end
-oUF.TagEvents["[rip]"] = "UNIT_AURA"
-
-oUF.Tags["[ripTime]"] = function(u)
-	local name, _,_,_,_,_, expirationTime, fromwho,_ = UnitAura(u, L["Riptide"])
-	if (fromwho == "player") then return getTime(expirationTime) end 
-end
-oUF.TagEvents["[ripTime]"] = "UNIT_AURA"
-
-oUF.earthCount = {
-	"i",
-	"h",
-	"g",
-	"f",
-	"p",
-	"q",
-	"Z",
-	"Y"
-}
-oUF.Tags["[earth]"] = function(u)
-	local c = select(4, UnitAura(u, L["Earth Shield"]))
-	if c then
-		return "|cffFFCF7F"..oUF.earthCount[c].."|r"
+	oUF.TagEvents["GotN"] = "UNIT_AURA"
+	
+	oUF.Tags["Renew"] = function(unit)
+		local name, _, _, _, _, _, _, caster = UnitAura(unit, L["Renew"])
+		if (caster and caster == "player") then
+			return "|cff33FF33M|r"
+		end
 	end
-end
-oUF.TagEvents["[earth]"] = "UNIT_AURA"
-
-
-oUF.classIndicators = {
-	["DRUID"] = {
-		["TL"] = "[tree]",
-		["TR"] = "[gotw]",
-		["BL"] = "[regrow][wg]",
-		["BR"] = "[lb]",
-	},
-	["PRIEST"] = {
-		["TL"] = "[pws][ws]",
-		["TR"] = "[ds][sp][fort][fw]",
-		["BL"] = "[rnw] [ad]",
-		["BR"] = "[pom]",
-	},
-	["PALADIN"] = {
-		["TL"] = "[selfsacred][sacred]",
-		["TR"] = "[selfbeacon][beacon]",
+	oUF.TagEvents["Renew"] = "UNIT_AURA"
+	
+	oUF.Tags["AD"] = function(unit)
+		local name, _, _, _, _, _, _, caster = UnitAura(unit, "Abolish Disease")
+		if (caster and caster == "player") then
+			return "|cffFFFF33M|r"
+		end
+	end
+	oUF.TagEvents["AD"] = "UNIT_AURA"
+	
+	oUF.Tags["PW:S"] = function(unit)
+		if (UnitAura(unit, L["Power Word: Shield"])) then
+			return "|cff33FF33M|r"
+		end
+	end
+	oUF.TagEvents["PW:S"] = "UNIT_AURA"
+	
+	oUF.Tags["WS"] = function(unit)
+		if (UnitDebuff(unit, L["Weakened Soul"])) then
+			return "|cffFF9900M|r"
+		end
+	end
+	oUF.TagEvents["WS"] = "UNIT_AURA"
+	
+	oUF.Tags["FW"] = function(unit)
+		if (UnitAura(unit, L["Fear Ward"])) then
+			return "|cff8B4513M|r"
+		end
+	end
+	oUF.TagEvents["FW"] = "UNIT_AURA"
+	
+	oUF.Tags["SP"] = function(unit)
+		if (not (UnitAura(unit, L["Prayer of Shadow Protection"]) or UnitAura(unit, "Shadow Protection"))) then
+			return "|cff9900FFM|r"
+		end
+	end
+	oUF.TagEvents["SP"] = "UNIT_AURA"
+	
+	oUF.Tags["PW:F"] = function(unit)
+		if (not (UnitAura(unit, L["Prayer of Fortitude"]) or UnitAura(unit, L["Power Word: Fortitude"]))) then
+			return "|cff00A1DEM|r"
+		end
+	end
+	oUF.TagEvents["PW:F"] = "UNIT_AURA"
+	
+	oUF.Tags["DS"] = function(unit)
+		if (not (UnitAura(unit, L["Prayer of Spirit"]) or UnitAura(unit, L["Divine Spirit"]))) then
+			return "|cffffff00M|r"
+		end
+	end
+	oUF.TagEvents["DS"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "[PW:S][WS]",
+		["TR"] = "[DS][SP][PW:F][FW]",
+		["BL"] = "[Renew][AD]",
+		["BR"] = "[PoM]"
+	}
+	
+	-- DRUID
+elseif (class == "DRUID") then
+	local LBCount = {
+		4,
+		2,
+		3
+	}
+	oUF.Tags["LB"] = function(unit) 
+		local name, _,_, count,_,_, expirationTime, caster = UnitAura(unit, L["Lifebloom"])
+		if (caster and caster == "player") then
+			local timeLeft = GetTime() - expirationTime
+			if (timeLeft > -2) then
+				return "|cffFF0000"..LBCount[count].."|r"
+			else
+				return "|cffA7FD0A"..LBCount[count].."|r"
+			end
+		end
+		
+	end
+	oUF.TagEvents["LB"] = "UNIT_AURA"
+	
+	oUF.Tags["Rejuv"] = function(unit) 
+		local name, _,_,_,_,_,_, caster = UnitAura(unit, L["Rejuvenation"])
+		if (caster and caster == "player") then
+			return "|cff00FEBFM|r"
+		end
+	end
+	oUF.TagEvents["Rejuv"] = "UNIT_AURA"
+	
+	oUF.Tags["Regrowth"] = function(unit)
+		if (UnitAura(unit, L["Regrowth"])) then
+			return "|cff00FF10M|r"
+		end
+	end
+	oUF.TagEvents["Regrowth"] = "UNIT_AURA"
+	
+	oUF.Tags["WG"] = function(unit)
+		if (UnitAura(unit, L["Wild Growth"])) then
+			return "|cff33FF33M|r"
+		end
+	end
+	oUF.TagEvents["WG"] = "UNIT_AURA"
+	
+	oUF.Tags["Tree"] = function(unit)
+		if (UnitAura(unit, L["Tree of Life"])) then
+			return "|cff33FF33M|r"
+		end
+	end
+	oUF.TagEvents["Tree"] = "UNIT_AURA"
+	
+	oUF.Tags["GotW"] = function(unit)
+		if (not (UnitAura(unit, L["Gift of the Wild"]) or UnitAura(unit, L["Mark of the Wild"]))) then
+			return "|cffFF00FFM|r"
+		end
+	end
+	oUF.TagEvents["GotW"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "[Tree]",
+		["TR"] = "[GotW]",
+		["BL"] = "[Regrowth][WG]",
+		["BR"] = "[LB]"
+	}
+	
+	-- WARRIOR
+elseif (class == "WARRIOR") then
+	oUF.Tags["BS"] = function(unit)
+		if (UnitAura(unit, L["Battle Shout"])) then
+			return "|cffff0000M|r"
+		end
+	end
+	oUF.TagEvents["BS"] = "UNIT_AURA"
+	
+	oUF.Tags["CS"] = function(unit)
+		if (UnitAura(unit, L["Commanding Shout"])) then
+			return "|cffffff00M|r"
+		end
+	end
+	oUF.TagEvents["CS"] = "UNIT_AURA"
+	
+	oUF.Tags["[Vigilance]"] = function(unit)
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Vigilance"])
+		if (caster and caster == "player") then
+			return "|cffDEB887M|r"
+		end
+	end
+	oUF.TagEvents["Vigilance"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "[Vigilance]",
+		["TR"] = "[BS][CS]",
 		["BL"] = "",
-		["BR"] = "",
-	},
-	["WARLOCK"] = {
+		["BR"] = ""
+	}
+	
+	-- DEATHKNIGHT
+elseif (class == "DEATHKNIGHT") then
+	oUF.Tags["HoW"] = function(unit)
+		if (UnitAura(unit, L["Horn of Winter"])) then
+			return "|cffffff10M|r"
+		end
+	end
+	oUF.TagEvents["HoW"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
 		["TL"] = "",
-		["TR"] = "",
-		["BL"] = "",
-		["BR"] = "",
-	},
-	["WARRIOR"] = {
-		["TL"] = "[vigil]",
-		["TR"] = "",
-		["BL"] = "",
-		["BR"] = "",
-	},
-	["DEATHKNIGHT"] = {
-		["TL"] = "",
-		["TR"] = "[how]",
-		["BL"] = "",
-		["BR"] = "",
-	},
-	["SHAMAN"] = {
-		["TL"] = "[rip]",
-		["TR"] = "",
-		["BL"] = "",
-		["BR"] = "[earth]",
-	},
-	["HUNTER"] = {
-		["TL"] = "",
-		["TR"] = "",
-		["BL"] = "",
-		["BR"] = "",
-	},
-	["ROGUE"] = {
-		["TL"] = "",
-		["TR"] = "",
-		["BL"] = "",
-		["BR"] = "",
-	},
-	["MAGE"] = {
-		["TL"] = "",
-		["TR"] = "[mc]",
+		["TR"] = "[HoW]",
 		["BL"] = "",
 		["BR"] = "",
 	}
-}
+	
+	-- MAGE
+elseif (class == "MAGE") then
+	oUF.Tags["MC"] = function(unit)
+		if (UnitAura(u, L["Magic Concentration"])) then
+			return "|cffffff00M|r"
+		end
+	end
+	oUF.TagEvents["MC"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "",
+		["TR"] = "[MC]",
+		["BL"] = "",
+		["BR"] = ""
+	}
+	
+	-- PALADIN
+elseif (class == "PALADIN") then
+	oUF.Tags["SS"] = function(unit)
+		if (UnitAura(unit, L["Sacred Shield"])) then
+			return "|cffffff10M|r"
+		end
+	end
+	oUF.TagEvents["SS"] = "UNIT_AURA"
+	
+	oUF.Tags["BoL"] = function(unit)
+		if (UnitAura(u, L["Beacon of Light"])) then
+			return "|cffffff10M|r"
+		end
+	end
+	oUF.TagEvents["BoL"] = "UNIT_AURA"
+	
+	oUF.Tags["sSS"] = function(unit)
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Sacred Shield"])
+		if (caster and caster == "player") then
+			return "|cffff33ffM|r"
+		end
+	end
+	oUF.TagEvents["sSS"] = "UNIT_AURA"
+	
+	oUF.Tags["sBoL"] = function(unit)
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Beacon of Light"])
+		if (caster and caster == "player") then
+			return "|cffff33ffM|r"
+		end
+	end
+	oUF.TagEvents["sBoL"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "[sSS][SS]",
+		["TR"] = "[sBoL][BoL]",
+		["BL"] = "",
+		["BR"] = ""
+	}
+	
+	-- SHAMAN
+elseif (class == "SHAMAN") then
+	local earthCount = {
+		"i",
+		"h",
+		"g",
+		"f",
+		"p",
+		"q",
+		"Z",
+		"Y"
+	}
+	
+	oUF.Tags["ES"] = function(unit)
+		local _, _, _, count = UnitAura(unit, L["Earth Shield"])
+		if (c) then
+			return "|cffFFCF7F"..earthCount[count].."|r"
+		end
+	end
+	oUF.TagEvents["ES"] = "UNIT_AURA"
+	
+	oUF.Tags["Riptide"] = function(unit) 
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Riptide"])
+		if (caster and caster == "player") then
+			return "|cff00FEBFM|r"
+		end
+	end
+	oUF.TagEvents["Riptide"] = "UNIT_AURA"
+	
+	oUF.Indicators = {
+		["TL"] = "[Riptide]",
+		["TR"] = "",
+		["BL"] = "",
+		["BR"] = "[ES]"
+	}
+end
