@@ -610,10 +610,6 @@ local auraPostCreateIcon = function(icons, button)
 	end
 end
 
--- --
--- Auras Shit End
--- --
-
 local UNIT_THREAT_SITUATION_UPDATE = function(self)
 	local health = self.Health
 	local threat = UnitThreatSituation(self.unit)
@@ -623,6 +619,8 @@ local UNIT_THREAT_SITUATION_UPDATE = function(self)
 		else
 			health:SetStatusBarColor(153/255, 85/255, 85/255)
 		end
+	else
+		healthUpdate(self, nil, self.unit)
 	end
 end
 
@@ -706,10 +704,6 @@ local calculateDPSandHPS = function(self, elapsed)
 		end
 	end
 end
-
--- --
--- DPSISH
--- --
 
 local shared = function(self, unit)
 	unit = unit:find("boss%d") and "boss" or unit:find("arena%d") and "arena" or unit
@@ -982,9 +976,19 @@ local shared = function(self, unit)
 	table.insert(self.__elements, RAID_TARGET_UPDATE)
 	
 	if (unit ~= "player" and unit ~= "boss") then
-		self.SpellRange = true
-		self.inRangeAlpha = 1
-		self.outsideRangeAlpha = .25
+		if (IsAddOnLoaded("oUF_SpellRange")) then
+			self.SpellRange = {
+				insideAlpha = 1,
+				outsideAlpha = .25
+			}
+		else
+			if (unit == "party" or unit == "raid") then
+				self.Range = {
+					insideAlpha = 1,
+					outsideAlpha = .25
+				}
+			end
+		end
 	end
 	
 	if (unit == "player" or unit == "raid") then
@@ -1325,7 +1329,7 @@ local unitSpecific = {
 			heal:SetWidth(0)
 			heal:SetStatusBarTexture(gxMedia.statusBar)
 			heal:SetStatusBarColor(0, 1, 0, 0.4)
-			heal:SetPoint("BOTTOM", hp)
+			heal:SetPoint("BOTTOM", hp, "BOTTOM")
 			
 			self.HealCommBar = heal
 			self.HealCommOthersOnly = true
