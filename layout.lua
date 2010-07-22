@@ -1,5 +1,3 @@
-local _, settings = ...
-
 local gxMedia = gxMedia or {
 	auraFont = [=[Fonts\FRIZQT__.TTF]=],
 	bgFile = [=[Interface\ChatFrame\ChatFrameBackground]=],
