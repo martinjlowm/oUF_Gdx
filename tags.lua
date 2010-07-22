@@ -64,13 +64,13 @@ local utf8sub = function(string, i, dots)
 		while pos <= bytes do
 			len = len + 1
 			local c = string:byte(pos)
-			if c > 0 and c <= 127 then
+			if (c > 0 and c <= 127) then
 				pos = pos + 1
-			elseif c >= 192 and c <= 223 then
+			elseif (c >= 192 and c <= 223) then
 				pos = pos + 2
-			elseif c >= 224 and c <= 239 then
+			elseif (c >= 224 and c <= 239) then
 				pos = pos + 3
-			elseif c >= 240 and c <= 247 then
+			elseif (c >= 240 and c <= 247) then
 				pos = pos + 4
 			end
 			if (len == i) then
@@ -117,13 +117,13 @@ oUF.Tags["raidHP"] = function(unit)
 	local def = oUF.Tags["missinghp"](unit)
 	local per = oUF.Tags["perhp"](unit)
 	local result
-	if UnitIsDead(unit) then
+	if (UnitIsDead(unit)) then
 		result = "Dead"
-	elseif UnitIsGhost(unit) then
+	elseif (UnitIsGhost(unit)) then
 		result = "Ghost"
-	elseif not UnitIsConnected(unit) then
+	elseif (not UnitIsConnected(unit)) then
 		result = "D/C"
-	elseif per < 90 and def then
+	elseif (per < 90 and def) then
 		result = "-"..numberize(def)
 	else
 		result = utf8sub(UnitName(unit), 4) or "N/A"
@@ -225,6 +225,7 @@ end
 oUF.TagEvents["powerText"] = "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_MAXRUNIC_POWER UNIT_RUNIC_POWER"
 
 local L = {
+	["Abolish Disease"] = GetSpellInfo(552)
 	["Prayer of Mending"] = GetSpellInfo(33076),
 	["Gift of the Naaru"] = GetSpellInfo(59542),
 	["Renew"] = GetSpellInfo(139),
@@ -283,7 +284,7 @@ if (class == "PRIEST") then
 	oUF.TagEvents["GotN"] = "UNIT_AURA"
 	
 	oUF.Tags["Renew"] = function(unit)
-		local name, _, _, _, _, _, _, caster = UnitAura(unit, L["Renew"])
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Renew"])
 		if (caster and caster == "player") then
 			return "|cff33FF33M|r"
 		end
@@ -291,7 +292,7 @@ if (class == "PRIEST") then
 	oUF.TagEvents["Renew"] = "UNIT_AURA"
 	
 	oUF.Tags["AD"] = function(unit)
-		local name, _, _, _, _, _, _, caster = UnitAura(unit, "Abolish Disease")
+		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Abolish Disease"])
 		if (caster and caster == "player") then
 			return "|cffFFFF33M|r"
 		end
@@ -355,7 +356,7 @@ elseif (class == "DRUID") then
 		3
 	}
 	oUF.Tags["LB"] = function(unit) 
-		local name, _,_, count,_,_, expirationTime, caster = UnitAura(unit, L["Lifebloom"])
+		local _, _, _, count, _, _, expirationTime, caster = UnitAura(unit, L["Lifebloom"])
 		if (caster and caster == "player") then
 			local timeLeft = GetTime() - expirationTime
 			if (timeLeft > -2) then
@@ -369,7 +370,7 @@ elseif (class == "DRUID") then
 	oUF.TagEvents["LB"] = "UNIT_AURA"
 	
 	oUF.Tags["Rejuv"] = function(unit) 
-		local name, _,_,_,_,_,_, caster = UnitAura(unit, L["Rejuvenation"])
+		local _, _,_,_,_,_,_, caster = UnitAura(unit, L["Rejuvenation"])
 		if (caster and caster == "player") then
 			return "|cff00FEBFM|r"
 		end
@@ -461,7 +462,7 @@ elseif (class == "DEATHKNIGHT") then
 	-- MAGE
 elseif (class == "MAGE") then
 	oUF.Tags["MC"] = function(unit)
-		if (UnitAura(u, L["Magic Concentration"])) then
+		if (UnitAura(unit, L["Magic Concentration"])) then
 			return "|cffffff00M|r"
 		end
 	end
@@ -484,7 +485,7 @@ elseif (class == "PALADIN") then
 	oUF.TagEvents["SS"] = "UNIT_AURA"
 	
 	oUF.Tags["BoL"] = function(unit)
-		if (UnitAura(u, L["Beacon of Light"])) then
+		if (UnitAura(unit, L["Beacon of Light"])) then
 			return "|cffffff10M|r"
 		end
 	end
@@ -528,7 +529,7 @@ elseif (class == "SHAMAN") then
 	
 	oUF.Tags["ES"] = function(unit)
 		local _, _, _, count = UnitAura(unit, L["Earth Shield"])
-		if (c) then
+		if (count) then
 			return "|cffFFCF7F"..earthCount[count].."|r"
 		end
 	end
