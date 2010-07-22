@@ -2,8 +2,6 @@ if (not oUF) then
 	return
 end
 
-local _, settings = ...
-
 oUF.Tags["diffColor"] = function(unit)
 	local r, g, b
 	local level = UnitLevel(unit)
@@ -225,7 +223,7 @@ end
 oUF.TagEvents["powerText"] = "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_MAXRUNIC_POWER UNIT_RUNIC_POWER"
 
 local L = {
-	["Abolish Disease"] = GetSpellInfo(552)
+	["Abolish Disease"] = GetSpellInfo(552),
 	["Prayer of Mending"] = GetSpellInfo(33076),
 	["Gift of the Naaru"] = GetSpellInfo(59542),
 	["Renew"] = GetSpellInfo(139),
