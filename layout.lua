@@ -563,7 +563,7 @@ local auraPostUpdate = function(icons, unit)
 end
 
 local auraPostCreateIcon = function(icons, button, enchantArg)
-	if (icons.Enchant == enchantArg) then
+	if (icons.Enchant == enchantArg and enchantArg) then
 		icons = enchantArg -- ugly fix
 	end
 	local backdrop = CreateFrame("Frame", nil, button)
