@@ -562,7 +562,10 @@ local auraPostUpdate = function(icons, unit)
 	end
 end
 
-local auraPostCreateIcon = function(icons, button)
+local auraPostCreateIcon = function(icons, button, enchantArg)
+	if (icons.Enchant == enchantArg) then
+		icons = enchantArg -- ugly fix
+	end
 	local backdrop = CreateFrame("Frame", nil, button)
 	backdrop:SetPoint("TOPLEFT", button, -3.5, 3)
 	backdrop:SetPoint("BOTTOMRIGHT", button, 4, -3.5)
@@ -1114,7 +1117,7 @@ local unitSpecific = {
 			
 			self.Enchant = enchant
 			
-			self.PostCreateEnchantIcon = CreateAura
+			self.PostCreateEnchantIcon = auraPostCreateIcon
 		end
 		
 		if (IsAddOnLoaded("oUF_Experience")) then
