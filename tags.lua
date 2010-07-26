@@ -181,7 +181,8 @@ local power = {
 	["AMMOSLOT"] = {0.8, 0.6, 0},
 	["FUEL"] = {0, 0.55, 0.5},
 	["POWER_TYPE_STEAM"] = {0.55, 0.57, 0.61},
-	["POWER_TYPE_PYRITE"] = {0.60, 0.09, 0.17}
+	["POWER_TYPE_PYRITE"] = {0.60, 0.09, 0.17},
+	["POWER_TYPE_HEAT"] = {0.60, 0.09, 0.17}
 }
 
 oUF.Tags["powerText"] = function(unit)
@@ -196,6 +197,8 @@ oUF.Tags["powerText"] = function(unit)
 	
 	if (t) then
 		r, g, b = t[1], t[2], t[3]
+	else
+		r, g, b = .6, .6, .6
 	end
 
 	if (cur == 0) then

@@ -1325,12 +1325,12 @@ local unitSpecific = {
 		health:SetOrientation("VERTICAL")
 		
 		if (IsAddOnLoaded("oUF_HealComm4")) then
-			local heal = CreateFrame('StatusBar', nil, hp)
+			local heal = CreateFrame('StatusBar', nil, health)
 			heal:SetHeight(0)
 			heal:SetWidth(0)
 			heal:SetStatusBarTexture(gxMedia.statusBar)
 			heal:SetStatusBarColor(0, 1, 0, 0.4)
-			heal:SetPoint("BOTTOM", hp, "BOTTOM")
+			heal:SetPoint("BOTTOM", health, "BOTTOM")
 			
 			self.HealCommBar = heal
 			self.HealCommOthersOnly = true
