@@ -78,6 +78,7 @@ local debuffs = setmetatable({
 	--	Icecrown Citadel	--
 	--------------------------
 	-- The Lich King
+	[GetSpellInfo(69242)] = 8,	-- Soul Shriek
 	[GetSpellInfo(73781)] = 3,	-- Infest
 	[GetSpellInfo(73912)] = 7,	-- Necrotic Plague
 	[GetSpellInfo(72133)] = 5,	-- Pain and Suffering
@@ -109,6 +110,9 @@ local debuffs = setmetatable({
 	
 	-- Festergut
 	[GetSpellInfo(69279)] = 10,	-- Gas Spore
+	
+	-- Precious & Stinky
+	[GetSpellInfo(25646)] = 10, -- Mortal Wound
 	
 	-- Deathbringer Saurfang
 	[GetSpellInfo(72293)] = 10,	-- Mark of the Fallen Champion
@@ -215,25 +219,29 @@ local debuffs = setmetatable({
 	--------------------------
 	--	Player vs. Player	--
 	--------------------------
+	-- Do not dispel
+	[GetSpellInfo(48160)] = 9,	-- Vampiric Touch
+	[GetSpellInfo(47843)] = 10,	-- Unstable Affliction
+	
 	-- Poison damage
 	[GetSpellInfo(3034)] = 7,	-- Viper Sting
 	
 	-- Health reduction
-	[GetSpellInfo(13219)] = 9,	-- Wound Poison
+	[GetSpellInfo(13219)] = 8,	-- Wound Poison
 	[GetSpellInfo(12294)] = 8,	-- Mortal Strike
 	[GetSpellInfo(19434)] = 8,	-- Aimed Shot
 	
 	-- Silence
-	[GetSpellInfo(18469)] = 11,	-- Silenced - Improved Counterspell
-	[GetSpellInfo(2139)] = 10,	-- Counterspell
+	[GetSpellInfo(18469)] = 9,	-- Silenced - Improved Counterspell
+	[GetSpellInfo(2139)] = 8,	-- Counterspell
 	
 	-- Disoriented
-	[GetSpellInfo(2094)] = 10,	-- Blind
-	[GetSpellInfo(33786)] = 10,	-- Cyclone
-	[GetSpellInfo(19503)] = 10,	-- Scatter Shot
+	[GetSpellInfo(2094)] = 7,	-- Blind
+	[GetSpellInfo(33786)] = 7,	-- Cyclone
+	[GetSpellInfo(19503)] = 7,	-- Scatter Shot
 	
 	-- Crowd control effects
-	[GetSpellInfo(118)] = 10,	-- Polymorph
+	[GetSpellInfo(118)] = 8,	-- Polymorph
 	
 	-- Root effects
 	[GetSpellInfo(339)] = 7,	-- Entangling Roots
@@ -241,14 +249,14 @@ local debuffs = setmetatable({
 	[GetSpellInfo(45524)] = 7,	-- Chains of Ice
 	
 	-- Slow effects
-	[GetSpellInfo(3409)] = 6,	-- Crippling Poison
-	[GetSpellInfo(1715)] = 5,	-- Hamstring
-	[GetSpellInfo(2974)] = 5,	-- Wing Clip
+	[GetSpellInfo(3409)] = 1,	-- Crippling Poison
+	[GetSpellInfo(1715)] = 1,	-- Hamstring
+	[GetSpellInfo(2974)] = 1,	-- Wing Clip
 	
 	-- Fear effects
-	[GetSpellInfo(6215)] = 3,	-- Fear
-	[GetSpellInfo(10890)] = 3,	-- Psychic Scream
-	[GetSpellInfo(17928)] = 3,	-- Howl of Terror
+	[GetSpellInfo(6215)] = 8,	-- Fear
+	[GetSpellInfo(10890)] = 8,	-- Psychic Scream
+	[GetSpellInfo(17928)] = 8,	-- Howl of Terror
 }, { __index = function() return 0 end })
 
 
@@ -339,6 +347,7 @@ end
 local castOnUpdate = function(self, elapsed)
 	if (self.casting) then
 		local duration = self.Reverse and self.duration - elapsed or self.duration + elapsed
+		local durText = self.Reverse and self.durText + elapsed
 		
 		if (self.Reverse and duration <= 0 or duration >= self.max) then
 			self.casting = nil
@@ -349,16 +358,18 @@ local castOnUpdate = function(self, elapsed)
 		
 		if (self.Time) then
 			if (self.delay ~= 0) then
-				self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", duration, self.delay)
+				self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", self.Reverse and durText or duration, self.delay)
 			else
-				self.Time:SetFormattedText("%.1f", duration)
+				self.Time:SetFormattedText("%.1f", self.Reverse and durText or duration)
 			end
 		end
 		
+		self.durText = durText
 		self.duration = duration
 		self:SetValue(duration)
 	elseif (self.channeling) then
 		local duration = self.Reverse and self.duration + elapsed or self.duration - elapsed
+		local durText = self.Reverse and self.durText - elapsed
 		
 		if (self.Reverse and duration >= self.max or duration <= 0) then
 			self.channeling = nil
@@ -369,12 +380,13 @@ local castOnUpdate = function(self, elapsed)
 		
 		if (self.Time) then
 			if (self.delay ~= 0) then
-				self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", duration, self.delay)
+				self.Time:SetFormattedText("%.1f|cffff0000-%.1f|r", self.Reverse and durText or duration, self.delay)
 			else
-				self.Time:SetFormattedText("%.1f", duration)
+				self.Time:SetFormattedText("%.1f", self.Reverse and durText or duration)
 			end
 		end
 		
+		self.durText = durText
 		self.duration = duration
 		self:SetValue(duration)
 	else
@@ -391,24 +403,26 @@ end
 
 local PostCastStart = function(castBar, unit, name, rank)
 	if (castBar.Reverse) then
-		local _, _, _, _, _, endTime = UnitCastingInfo(unit)
+		local _, _, _, _, startTime, endTime = UnitCastingInfo(unit)
 		
+		startTime = startTime / 1e3
 		endTime = endTime / 1e3
-		local duration = endTime - GetTime()
 		
-		castBar.duration = duration
-		castBar:SetValue(duration)
+		castBar.durText = GetTime() - startTime
+		castBar.duration = endTime - GetTime()
+		castBar:SetValue(castBar.duration)
 	end
 end
 
 local PostChannelStart = function(castBar, unit, name, rank)
 	if (castBar.Reverse) then
-		local _, _, _, _, startTime = UnitChannelInfo(unit)
+		local _, _, _, _, startTime, endTime = UnitChannelInfo(unit)
 		
 		startTime = startTime / 1e3
-		local duration = GetTime() - startTime
+		endTime = endTime / 1e3
 		
-		castBar.duration = duration
+		castBar.durText = endTime - GetTime()
+		castBar.duration = GetTime() - startTime
 		castBar:SetValue(0)
 	end
 end
@@ -779,7 +793,7 @@ local shared = function(self, unit)
 			time:SetTextColor(0.84, 0.75, 0.65)
 			time:SetJustifyH("RIGHT")
 			
-			if (unit == "target" or unit == "focus" or unit == "arena") then
+			if (unit == "target" or unit == "focus" or unit == "boss") then
 				cb.Reverse = true
 				cb:SetStatusBarColor(.1, .1, .1)
 				cb:SetStatusBarTexture(gxMedia.bgFile)
@@ -863,7 +877,7 @@ local shared = function(self, unit)
 	bg:SetAllPoints(hp)
 	bg:SetTexture(gxMedia.statusBar)
 	
-	if (unit == "target" or unit == "targettarget" or unit == "focus" or unit == "arena") then
+	if (unit == "target" or unit == "targettarget" or unit == "focus" or unit == "boss") then
 		hp.Reverse = true
 		hp:SetStatusBarColor(.1,.1,.1)
 	else
@@ -906,8 +920,7 @@ local shared = function(self, unit)
 		bg:SetAllPoints(pp)
 		bg:SetTexture(gxMedia.statusBar)
 		
-		if (unit ~= "target") then
-			pp.Reverse = false
+		if (unit ~= "target" and unit ~= "boss") then
 			bg:SetVertexColor(.1,.1,.1)
 		end
 		
@@ -1030,7 +1043,6 @@ local unitSpecific = {
 		self.Panel:SetHeight(20)
 		
 		local castBar = self.Castbar
-		castBar:SetHeight(18)
 		castBar.Icon:SetPoint("TOPRIGHT", self, "LEFT", -10, 10)
 		
 		local dps = self.Panel:CreateFontString(nil, "OVERLAY")
@@ -1163,6 +1175,12 @@ local unitSpecific = {
 		
 		self.Panel.Info:SetPoint("BOTTOM", self, 0, 3.5)
 		self:Tag(self.Panel.Info, "[nameColor][longName] [diffColor][level] [shortclassification]")
+		
+		local debuffs = self.Debuffs
+		debuffs.num = 4
+		debuffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 3)
+		debuffs.initialAnchor = "BOTTOMLEFT"
+		debuffs["growth-x"] = "RIGHT"
 	end,
 	target = function(self, unit)
 		self:SetAttribute('initial-height', 55)
@@ -1200,7 +1218,6 @@ local unitSpecific = {
 		self:Tag(panel.Info, "[nameColor][longName] [diffColor][level] [shortclassification]")
 		
 		local castBar = self.Castbar
-		castBar:SetHeight(18)
 		castBar.Icon:SetPoint("TOPLEFT", self, "RIGHT", 10, 10)
 		
 		local leader = self.Leader
@@ -1232,7 +1249,7 @@ local unitSpecific = {
 				tex:SetWidth(230 / 5)
 				tex:SetTexture(gxMedia.statusBar)
 				if (i == 1) then
-					tex:SetPoint("TOPLEFT")
+					tex:SetPoint("TOPRIGHT")
 					tex:SetVertexColor(0.69, 0.31, 0.31)
 				else
 					tex:SetPoint("RIGHT", combo[i - 1], "LEFT")
@@ -1265,6 +1282,12 @@ local unitSpecific = {
 		
 		local health = self.Health
 		health:SetHeight(18)
+		
+		local debuffs = self.Debuffs
+		debuffs.num = 4
+		debuffs:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, 3)
+		debuffs.initialAnchor = "BOTTOMRIGHT"
+		debuffs["growth-x"] = "LEFT"
 	end,
 	focus = function(self, unit)
 		self:SetAttribute('initial-height', 35)
@@ -1278,7 +1301,6 @@ local unitSpecific = {
 		self:Tag(self.Panel.Info, "[nameColor][mediumName]")
 		
 		local castBar = self.Castbar
-		castBar:SetHeight(18)
 		castBar.Icon:SetPoint("TOPLEFT", self, "RIGHT", 10, 10)
 		
 		local health = self.Health
@@ -1288,27 +1310,26 @@ local unitSpecific = {
 		power:SetHeight(2)
 	end,
 	boss = function(self, unit)
-		self:SetAttribute('initial-height', 55)
-		self:SetAttribute('initial-width', 230)
+		self:SetAttribute('initial-height', 40)
+		self:SetAttribute('initial-width', 200)
 		
 		shared(self, unit)
 		
-		self.Panel:SetHeight(20)
+		self.Panel:SetHeight(15)
 		
 		self.Panel.Info:SetPoint("BOTTOM", self, 0, 3.5)
 		self:Tag(self.Panel.Info, "[nameColor][mediumName]")
 		
 		local castBar = self.Castbar
-		castBar:SetHeight(18)
 		castBar.Icon:SetPoint("TOPLEFT", self, "RIGHT", 10, 10)
 		
 		local health = self.Health
-		health:SetHeight(27)
+		health:SetHeight(22)
 		health.Text:SetPoint("BOTTOMRIGHT", self, -5, 5)
 		health.Text:SetJustifyH("RIGHT")
 		
 		local power = self.Power
-		power:SetHeight(8)
+		power:SetHeight(5)
 		power.Text:SetPoint("BOTTOMLEFT", self, 5, 5)
 		power.Text:SetJustifyH("LEFT")
 	end,
@@ -1523,11 +1544,15 @@ oUF:Factory(function(self)
 		local boss = self:Spawn("boss"..i)
 		
 		if (prev) then
-			boss:SetPoint("TOP", prev, "BOTTOM", 0, -5)
+			boss:SetPoint("TOP", prev, "BOTTOM", 0, -10)
 		else
-			boss:SetPoint("LEFT", UIParent, 10, 400)
+			boss:SetPoint("TOPRIGHT", UIParent, -25, -25)
 		end
 		
 		prev = boss
 	end
+	
+	BuffFrame:UnregisterEvent("UNIT_AURA")
+	TemporaryEnchantFrame:Hide()
+	BuffFrame:Hide()
 end)
