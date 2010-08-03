@@ -1334,8 +1334,8 @@ local unitSpecific = {
 		power.Text:SetJustifyH("LEFT")
 	end,
 	raid = function(self, unit)
-		self:SetAttribute('initial-height', 35)
-		self:SetAttribute('initial-width', 45)
+		self:SetAttribute('initial-height', 32)
+		self:SetAttribute('initial-width', 48)
 		
 		shared(self, unit)
 		
