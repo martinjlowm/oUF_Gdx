@@ -1093,26 +1093,30 @@ local unitSpecific = {
 			runes.width = 230 / 6
 			runes.spacing = 0
 			
-			local colors = {
-				[1] = {.69,.31,.31},
-				[2] = {.69,.31,.31},
-				[3] = {.33,.59,.33},
-				[4] = {.33,.59,.33},
-				[5] = {.31,.45,.63},
-				[6] = {.31,.45,.63},
+			oUF.colors.runes = {
+				[1] = {.69,.31,.31},	-- Blood
+				[2] = {.33,.59,.33},	-- Unholy
+				[3] = {.31,.45,.63},	-- Frost
+				[4] = {.8,.6,.8}		-- Death
 			}
 			
 			local rune
 			for i = 1, 6 do
-				rune = CreateFrame('StatusBar', nil, runes)
-				rune:SetStatusBarTexture(gxMedia.statusBar)
-				rune:SetStatusBarColor(unpack(colors[i]))
+				rune = CreateFrame("StatusBar", nil, runes)
+				rune:SetStatusBarTexture(gxMedia.bgFile)
+				rune:SetWidth(runes.width)
+				rune:SetHeight(runes.height)
+				if (i == 1) then
+					rune:SetPoint("TOPLEFT", runes, "TOPLEFT")
+				else
+					rune:SetPoint("LEFT", runes[i-1], "RIGHT")
+				end
 				
 				runes[i] = rune
 			end
 			
-			health:SetPoint("TOPLEFT", self.Runes, "BOTTOMLEFT")
-			health:SetPoint("TOPRIGHT", self.Runes, "BOTTOMRIGHT")
+			health:SetPoint("TOPLEFT", runes, "BOTTOMLEFT")
+			health:SetPoint("TOPRIGHT", runes, "BOTTOMRIGHT")
 			
 			self.Runes = runes
 		end
@@ -1375,8 +1379,8 @@ local unitSpecific = {
 		
 		local icon = CreateFrame("Frame", nil, self)
 		icon:SetPoint("CENTER")
-		icon:SetHeight(20)
-		icon:SetWidth(20)
+		icon:SetHeight(22)
+		icon:SetWidth(22)
 		icon:Hide()
 		
 		local iconTex = icon:CreateTexture(nil, "ARTWORK")
@@ -1387,10 +1391,10 @@ local unitSpecific = {
 		overlay:SetTexture(gxMedia.buttonOverlay)
 		overlay:SetPoint("TOPLEFT", icon, -1, 1)
 		overlay:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-		overlay:SetTexCoord(.02, 1, .02, 1)
+		--overlay:SetTexCoord(.02, .98, .02, 1)
 		
 		local cooldown = CreateFrame("Cooldown", nil, icon)
-		cooldown:SetPoint("TOPLEFT", icon, 1, -1)
+		cooldown:SetPoint("TOPLEFT", icon, 2, -2)
 		cooldown:SetPoint("BOTTOMRIGHT", icon, -1, 1)
 		
 		local count = cooldown:CreateFontString(nil, "OVERLAY")

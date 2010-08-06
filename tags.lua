@@ -87,12 +87,18 @@ end
 
 oUF.Tags["shortName"] = function(unit)
 	local name = UnitName(unit)
-	return utf8sub(name, 6, false)
+	if (name) then
+		return utf8sub(name, 6, false)
+	end
 end
 oUF.TagEvents["shortName"] = "UNIT_NAME_UPDATE"
 
 oUF.Tags["mediumName"] = function(unit)
 	local name = UnitName(unit)
+	if (not name) then
+		return
+	end
+	
 	if (unit == "pet" and name == "Unknown") then
 		return "Pet"
 	else
@@ -103,7 +109,9 @@ oUF.TagEvents["mediumName"] = "UNIT_NAME_UPDATE"
 
 oUF.Tags["longName"] = function(unit)
 	local name = UnitName(unit)
-	return utf8sub(name, 36, true)
+	if (name) then
+		return utf8sub(name, 36, true)
+	end
 end
 oUF.TagEvents["longName"] = "UNIT_NAME_UPDATE"
 
@@ -223,7 +231,7 @@ oUF.Tags["powerText"] = function(unit)
 	
 	return result
 end
-oUF.TagEvents["powerText"] = "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_MAXRUNIC_POWER UNIT_RUNIC_POWER"
+oUF.TagEvents["powerText"] = "UNIT_MAXENERGY UNIT_MAXFOCUS UNIT_MAXMANA UNIT_MAXRAGE UNIT_ENERGY UNIT_FOCUS UNIT_MANA UNIT_RAGE UNIT_MAXRUNIC_POWER UNIT_RUNIC_POWER UPDATE_SHAPESHIFT_FORM"
 
 local L = {
 	["Abolish Disease"] = GetSpellInfo(552),
