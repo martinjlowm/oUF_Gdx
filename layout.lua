@@ -1391,7 +1391,6 @@ local unitSpecific = {
 		overlay:SetTexture(gxMedia.buttonOverlay)
 		overlay:SetPoint("TOPLEFT", icon, -1, 1)
 		overlay:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-		--overlay:SetTexCoord(.02, .98, .02, 1)
 		
 		local cooldown = CreateFrame("Cooldown", nil, icon)
 		cooldown:SetPoint("TOPLEFT", icon, 2, -2)
