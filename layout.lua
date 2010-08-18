@@ -78,11 +78,12 @@ local debuffs = setmetatable({
 	--	Icecrown Citadel	--
 	--------------------------
 	-- The Lich King
+	[GetSpellInfo(73799)] = 10,	-- Soul Reaper
 	[GetSpellInfo(69242)] = 8,	-- Soul Shriek
 	[GetSpellInfo(73781)] = 3,	-- Infest
 	[GetSpellInfo(73912)] = 7,	-- Necrotic Plague
 	[GetSpellInfo(72133)] = 5,	-- Pain and Suffering
-	[GetSpellInfo(74325)] = 10,	-- Harvest Soul
+	[GetSpellInfo(74325)] = 9,	-- Harvest Soul
 	
 	-- Sindragosa
 	[GetSpellInfo(69762)] = 7,	-- Unchained Magic

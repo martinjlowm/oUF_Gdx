@@ -437,7 +437,7 @@ elseif (class == "WARRIOR") then
 	end
 	oUF.TagEvents["CS"] = "UNIT_AURA"
 	
-	oUF.Tags["[Vigilance]"] = function(unit)
+	oUF.Tags["Vigilance"] = function(unit)
 		local _, _, _, _, _, _, _, caster = UnitAura(unit, L["Vigilance"])
 		if (caster and caster == "player") then
 			return "|cffDEB887M|r"
