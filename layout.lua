@@ -8,6 +8,8 @@ local gxMedia = gxMedia or {
 	symbolFont = [=[Fonts\FRIZQT__.TTF]=]
 }
 
+local emptyFunc = function() end
+
 local dispellClass
 local _, class = UnitClass("player")
 do
@@ -618,8 +620,7 @@ local auraPostCreateIcon = function(icons, button, enchantArg)
 	button.overlay:SetPoint("BOTTOMRIGHT", button, 1, -1)
 	button.overlay:SetVertexColor(.6,.6,.6)
 	button.overlay:SetTexCoord(0, 0.98, 0, 0.98)
-	button.overlay.Hide = function(self)
-	end
+	button.overlay.Hide = emptyFunc
 	
 	if (icons == icons:GetParent().Enchant) then
 		button.overlay:SetVertexColor(0.33, 0.59, 0.33)
@@ -860,8 +861,7 @@ local shared = function(self, unit)
 		
 		if (unit == "pet" and not self.Castbar) then
 			PetCastingBarFrame:UnregisterAllEvents()
-			PetCastingBarFrame.Show = function()
-			end
+			PetCastingBarFrame.Show = emptyFunc
 			PetCastingBarFrame:Hide()
 		end
 	end
