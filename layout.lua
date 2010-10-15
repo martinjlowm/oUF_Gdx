@@ -10,10 +10,6 @@ local gxMedia = gxMedia or {
 
 local emptyFunc = function() end
 
-local classBD = {
-	bgFile = gxMedia.bgFile
-}
-
 local dispellClass
 local _, class = UnitClass("player")
 do
@@ -477,12 +473,6 @@ local powerUpdate = function(self, event, unit)
 	local disconnected = not UnitIsConnected(unit)
 	
 	power:SetMinMaxValues(0, max)
-	
-	if(disconnected) then
-		power:SetValue(max)
-	else
-		power:SetValue(min)
-	end
 	
 	power.disconnected = disconnected
 	power.unit = unit
