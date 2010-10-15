@@ -10,6 +10,10 @@ local gxMedia = gxMedia or {
 
 local emptyFunc = function() end
 
+local classBD = {
+	bgFile = gxMedia.bgFile
+}
+
 local dispellClass
 local _, class = UnitClass("player")
 do
@@ -48,23 +52,6 @@ do
 		end
 		t = nil
 	end
-end
-
-local numTabs, numTalents, BodyNSoul, nameTalent, currRank = GetNumTalentTabs()
-for t = 1, numTabs do
-	if (BodyNSoul) then
-		break
-	end
-	
-	numTalents = GetNumTalents(t)
-	for i = 1, numTalents do
-		nameTalent, _, _, _, currRank = GetTalentInfo(t, i)
-		if (nameTalent == GetSpellInfo(64127) and currRank > 0) then
-			BodyNSoul = true
-			
-			break
-		end
-    end
 end
 
 local dispellPriority = {
@@ -169,7 +156,7 @@ local debuffs = setmetatable({
 	[GetSpellInfo(63713)] = 10,	-- Dominate Mind
 	[GetSpellInfo(36655)] = 1,	-- Drain Life
 	[GetSpellInfo(63147)] = 5,	-- Sara's Anger
-	[GetSpellInfo(30910)] = 10,	-- Curse of Doom
+	[GetSpellInfo(64157)] = 10,	-- Curse of Doom
 	[GetSpellInfo(63120)] = 10,	-- Insane
 	[GetSpellInfo(64125)] = 7,	-- Squeeze
 	
@@ -223,11 +210,8 @@ local debuffs = setmetatable({
 	--	Player vs. Player	--
 	--------------------------
 	-- Do not dispel
-	[GetSpellInfo(48160)] = 9,	-- Vampiric Touch
-	[GetSpellInfo(47843)] = 10,	-- Unstable Affliction
-	
-	-- Poison damage
-	[GetSpellInfo(3034)] = 7,	-- Viper Sting
+	[GetSpellInfo(34914)] = 9,	-- Vampiric Touch
+	[GetSpellInfo(30108)] = 10,	-- Unstable Affliction
 	
 	-- Health reduction
 	[GetSpellInfo(13219)] = 8,	-- Wound Poison
@@ -257,9 +241,9 @@ local debuffs = setmetatable({
 	[GetSpellInfo(2974)] = 1,	-- Wing Clip
 	
 	-- Fear effects
-	[GetSpellInfo(6215)] = 8,	-- Fear
-	[GetSpellInfo(10890)] = 8,	-- Psychic Scream
-	[GetSpellInfo(17928)] = 8,	-- Howl of Terror
+	[GetSpellInfo(5782)] = 8,	-- Fear
+	[GetSpellInfo(8122)] = 8,	-- Psychic Scream
+	[GetSpellInfo(5484)] = 8,	-- Howl of Terror
 }, { __index = function() return 0 end })
 
 
@@ -284,7 +268,7 @@ f.UNIT_AURA = function(self, unit)
 		if (not name) then
 			break
 		end
-
+		
 		if (not cur or (debuffs[name] >= debuffs[cur])) then
 			if (debuffs[name] > 0 and debuffs[name] > debuffs[cur or 1]) then
 				cur = name
@@ -494,6 +478,12 @@ local powerUpdate = function(self, event, unit)
 	
 	power:SetMinMaxValues(0, max)
 	
+	if(disconnected) then
+		power:SetValue(max)
+	else
+		power:SetValue(min)
+	end
+	
 	power.disconnected = disconnected
 	power.unit = unit
 	
@@ -650,14 +640,8 @@ local RAID_TARGET_UPDATE = function(self, event)
 	end
 end
 
-local UpdateCPoints = function(self, event, unit)
-	if (unit == PlayerFrame.unit and unit ~= self.CPoints.unit) then
-		self.CPoints.unit = unit
-	end
-end
-
 local time, sumElapsed, dps, hps, damagetotal, healingtotal, pName = 0, 0, 0, 0, 0, 0, UnitName("player")
-local damageevents = {
+local damage = {
 	SWING_DAMAGE = true,
 	RANGE_DAMAGE = true,
 	SPELL_DAMAGE = true,
@@ -665,30 +649,33 @@ local damageevents = {
 	DAMAGE_SHIELD = true,
 	DAMAGE_SPLIT = true
 }
-local healingevents = {
+local heal = {
 	SWING_HEAL = true,
 	RANGE_HEAL = true,
 	SPELL_HEAL = true,
 	SPELL_PERIODIC_HEAL = true,
 }
 
-local COMBAT_LOG_EVENT_UNFILTERED = function(self, _, _, eventtype, _, name, _, _, _, _, spellid, _, _, dmgorheal)
-	if (damageevents[eventtype]) then
-		if (name == pName) then
-			if (eventtype == "SWING_DAMAGE") then
-				dmgorheal = spellid
-			end
-			
-			damagetotal = (damagetotal or 0) + dmgorheal
-		end
-	elseif (healingevents[eventtype]) then
-		if (name == pName) then
-			if (eventtype == "SWING_HEAL") then
-				dmgorheal = spellid
-			end
-			
-			healingtotal = (healingtotal or 0) + dmgorheal
-		end
+local amount, over
+local COMBAT_LOG_EVENT_UNFILTERED = function(self, _, _, eventType, _, name, _, _, _, _, ...)
+	if (not damage[eventType] and not heal[eventType] or name ~= pName) then
+		return
+	end
+	
+	if (eventType == "SWING_DAMAGE") then
+		amount = ...
+	else
+		_, _, _, amount, over = ...
+	end
+	
+	if (damage[eventType]) then
+		damagetotal = (damagetotal or 0) + amount
+	elseif (heal[eventType]) then
+		healingtotal = (healingtotal or 0) + (amount - over)
+	end
+	
+	if (UnitAffectingCombat("player") and not self.Panel.DPS.start and damagetotal ~= 0 or healingtotal ~= 0) then
+		self.Panel.DPS.start = true
 	end
 end
 
@@ -698,10 +685,11 @@ local PLAYER_REGEN_ENABLED = function(self)
 	damagetotal = 0
 	healingtotal = 0
 	time = 0
+	self.Panel.DPS.start = nil
 end
 
 local calculateDPSandHPS = function(self, elapsed)
-	if (UnitAffectingCombat("player")) then
+	if (self.Panel.DPS.start) then
 		time = (time or 0) + elapsed
 		
 		sumElapsed = sumElapsed + elapsed
@@ -722,7 +710,7 @@ local calculateDPSandHPS = function(self, elapsed)
 	end
 end
 
-local shared = function(self, unit)
+local shared = function(self, unit, isSingle)
 	unit = unit:find("boss%d") and "boss" or unit:find("arena%d") and "arena" or unit
 	
 	self.menu = menu
@@ -749,8 +737,7 @@ local shared = function(self, unit)
 	backdrop:SetBackdropBorderColor(.15,.15,.15)
 	self.backdrop = backdrop
 	
-	self:RegisterForClicks("anyup")
-	self:SetAttribute("*type2", "menu")
+	self:RegisterForClicks("AnyDown")
 	
 	if (unit == "player" or unit == "target" or unit == "targettarget" or unit == "pet" or unit == "focus" or unit == "boss") then
 		local panel = CreateFrame("Frame", nil, self)
@@ -896,7 +883,7 @@ local shared = function(self, unit)
 	end
 	
 	hp.bg = bg
-	hp.Update = healthUpdate
+	hp.Override = healthUpdate
 	
 	self.Health = hp
 	
@@ -931,12 +918,12 @@ local shared = function(self, unit)
 			text:SetShadowColor(0, 0, 0)
 			text:SetShadowOffset(1.25, -1.25)
 			self:Tag(text, "[powerText]")
-
+			
 			pp.Text = text
 		end
 		
 		pp.bg = bg
-		pp.Update = powerUpdate
+		pp.Override = powerUpdate
 		
 		self.Power = pp
 	end
@@ -1013,11 +1000,10 @@ local shared = function(self, unit)
 end
 
 local unitSpecific = {
-	player = function(self, unit)
-		self:SetAttribute('initial-height', 55)
-		self:SetAttribute('initial-width', 230)
+	player = function(self, unit, ...)
+		self:SetSize(230, 55)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		local health = self.Health
 		health:SetHeight(27)
@@ -1077,51 +1063,6 @@ local unitSpecific = {
 		masterLooter:SetWidth(16)
 		masterLooter:SetPoint("CENTER", self, "TOPLEFT", 16, 0)
 		
-		if (class == "DEATHKNIGHT") then
-			self:SetAttribute('initial-height', self:GetAttribute('initial-height') + 8)
-			
-			local runes = CreateFrame('Frame', nil, self)
-			runes:SetPoint("TOPLEFT", self)
-			runes:SetHeight(8)
-			runes:SetWidth(230)
-			runes:SetBackdrop({
-				bgFile = gxMedia.bgFile
-			})
-			runes:SetBackdropColor(0.08, 0.08, 0.08)
-			runes.anchor = "TOPLEFT"
-			runes.growth = "RIGHT"
-			runes.height = 8
-			runes.width = 230 / 6
-			runes.spacing = 0
-			
-			oUF.colors.runes = {
-				[1] = {.69,.31,.31},	-- Blood
-				[2] = {.33,.59,.33},	-- Unholy
-				[3] = {.31,.45,.63},	-- Frost
-				[4] = {.8,.6,.8}		-- Death
-			}
-			
-			local rune
-			for i = 1, 6 do
-				rune = CreateFrame("StatusBar", nil, runes)
-				rune:SetStatusBarTexture(gxMedia.bgFile)
-				rune:SetWidth(runes.width)
-				rune:SetHeight(runes.height)
-				if (i == 1) then
-					rune:SetPoint("TOPLEFT", runes, "TOPLEFT")
-				else
-					rune:SetPoint("LEFT", runes[i-1], "RIGHT")
-				end
-				
-				runes[i] = rune
-			end
-			
-			health:SetPoint("TOPLEFT", runes, "BOTTOMLEFT")
-			health:SetPoint("TOPRIGHT", runes, "BOTTOMRIGHT")
-			
-			self.Runes = runes
-		end
-		
 		if (IsAddOnLoaded("oUF_WeaponEnchant")) then
 			local enchant = CreateFrame("Frame", nil, self)
 			enchant:SetHeight(27)
@@ -1167,11 +1108,10 @@ local unitSpecific = {
 			self.Experience = xp
 		end
 	end,
-	pet = function(self, unit)
-		self:SetAttribute('initial-height', 35)
-		self:SetAttribute('initial-width', 115)
+	pet = function(self, unit, ...)
+		self:SetSize(115, 35)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		local health = self.Health
 		health:SetHeight(18)
@@ -1187,11 +1127,10 @@ local unitSpecific = {
 		debuffs.initialAnchor = "BOTTOMLEFT"
 		debuffs["growth-x"] = "RIGHT"
 	end,
-	target = function(self, unit)
-		self:SetAttribute('initial-height', 55)
-		self:SetAttribute('initial-width', 230)
+	target = function(self, unit, ...)
+		self:SetSize(230, 55)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		local health = self.Health
 		health:SetHeight(27)
@@ -1226,59 +1165,17 @@ local unitSpecific = {
 		castBar.Icon:SetPoint("TOPLEFT", self, "RIGHT", 10, 10)
 		
 		local leader = self.Leader
-		leader:SetHeight(16)
-		leader:SetWidth(16)
+		leader:SetSize(16, 16)
 		leader:SetPoint("CENTER", self, "TOPRIGHT")
 		
 		local masterLooter = self.MasterLooter
-		masterLooter:SetHeight(16)
-		masterLooter:SetWidth(16)
+		masterLooter:SetSize(16, 16)
 		masterLooter:SetPoint("CENTER", self, "TOPRIGHT", -16, 0)
-		
-		if (class == "ROGUE" or class == "DRUID") then
-			self:SetAttribute('initial-height', self:GetAttribute('initial-height') + 8)
-			
-			local combo = CreateFrame("Frame", nil, self)
-			combo:SetHeight(8)
-			combo:SetWidth(230)
-			combo:SetBackdrop({
-				bgFile = gxMedia.bgFile
-			})
-			combo:SetBackdropColor(0.08, 0.08, 0.08)
-			combo:SetPoint("TOPRIGHT", self)
-			combo.unit = PlayerFrame.unit
-			local tex
-			for i = 1, 5 do
-				tex = combo:CreateTexture(nil, "ARTWORK")
-				tex:SetHeight(8)
-				tex:SetWidth(230 / 5)
-				tex:SetTexture(gxMedia.statusBar)
-				if (i == 1) then
-					tex:SetPoint("TOPRIGHT")
-					tex:SetVertexColor(0.69, 0.31, 0.31)
-				else
-					tex:SetPoint("RIGHT", combo[i - 1], "LEFT")
-				end
-				
-				combo[i] = tex
-			end
-			combo[2]:SetVertexColor(0.69, 0.31, 0.31)
-			combo[3]:SetVertexColor(0.65, 0.63, 0.35)
-			combo[4]:SetVertexColor(0.65, 0.63, 0.35)
-			combo[5]:SetVertexColor(0.33, 0.59, 0.33)
-			self:RegisterEvent("UNIT_COMBO_POINTS", UpdateCPoints)
-			
-			health:SetPoint("TOPLEFT", combo, "BOTTOMLEFT")
-			health:SetPoint("TOPRIGHT", combo, "BOTTOMRIGHT")
-			
-			self.CPoints = combo
-		end
 	end,
-	targettarget = function(self, unit)
-		self:SetAttribute('initial-height', 35)
-		self:SetAttribute('initial-width', 115)
+	targettarget = function(self, unit, ...)
+		self:SetSize(115, 35)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		self.Panel:SetHeight(17)
 		
@@ -1294,11 +1191,10 @@ local unitSpecific = {
 		debuffs.initialAnchor = "BOTTOMRIGHT"
 		debuffs["growth-x"] = "LEFT"
 	end,
-	focus = function(self, unit)
-		self:SetAttribute('initial-height', 35)
-		self:SetAttribute('initial-width', 115)
+	focus = function(self, unit, ...)
+		self:SetSize(115, 35)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		self.Panel:SetHeight(17)
 		
@@ -1313,16 +1209,17 @@ local unitSpecific = {
 		
 		local power = self.Power
 		power:SetHeight(2)
+		power:SetStatusBarColor(.1,.1,.1)
+		power.Reverse = true
 	end,
-	boss = function(self, unit)
-		self:SetAttribute('initial-height', 40)
-		self:SetAttribute('initial-width', 200)
+	boss = function(self, unit, ...)
+		self:SetSize(200, 40)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		self.Panel:SetHeight(15)
 		
-		self.Panel.Info:SetPoint("BOTTOM", self, 0, 3.5)
+		self.Panel.Info:SetPoint("BOTTOM", self, 0, 3)
 		self:Tag(self.Panel.Info, "[nameColor][mediumName]")
 		
 		local castBar = self.Castbar
@@ -1330,19 +1227,18 @@ local unitSpecific = {
 		
 		local health = self.Health
 		health:SetHeight(22)
-		health.Text:SetPoint("BOTTOMRIGHT", self, -5, 5)
+		health.Text:SetPoint("BOTTOMRIGHT", self, -5, 3)
 		health.Text:SetJustifyH("RIGHT")
 		
 		local power = self.Power
 		power:SetHeight(5)
-		power.Text:SetPoint("BOTTOMLEFT", self, 5, 5)
+		power.Text:SetPoint("BOTTOMLEFT", self, 5, 3)
 		power.Text:SetJustifyH("LEFT")
 	end,
-	raid = function(self, unit)
-		self:SetAttribute('initial-height', 32)
-		self:SetAttribute('initial-width', 48)
+	raid = function(self, unit, ...)
+		self:SetSize(48, 32)
 		
-		shared(self, unit)
+		shared(self, unit, ...)
 		
 		local health = self.Health
 		health:ClearAllPoints()
@@ -1350,19 +1246,18 @@ local unitSpecific = {
 		health.Smooth = nil
 		health:SetOrientation("VERTICAL")
 		
-		if (IsAddOnLoaded("oUF_HealComm4")) then
-			local heal = CreateFrame('StatusBar', nil, health)
-			heal:SetHeight(0)
-			heal:SetWidth(0)
-			heal:SetStatusBarTexture(gxMedia.statusBar)
-			heal:SetStatusBarColor(0, 1, 0, 0.4)
-			heal:SetPoint("BOTTOM", health, "BOTTOM")
-			
-			self.HealCommBar = heal
-			self.HealCommOthersOnly = true
-			self.HealCommTimeframe = 2
-		end
-	
+		local heal = CreateFrame('StatusBar', nil, health)
+		heal:SetHeight(0)
+		heal:SetWidth(0)
+		heal:SetStatusBarTexture(gxMedia.statusBar)
+		heal:SetStatusBarColor(0, 1, 0, 0.4)
+		heal:SetPoint("BOTTOM", health, "BOTTOM")
+		
+		self.HealPrediction = {
+			otherBar = heal,
+			maxOverflow = 1,
+		}
+		
 		if (IsAddOnLoaded("oUF_ResComm")) then
 			local rescomm = CreateFrame("StatusBar", nil, self)
 			rescomm:SetStatusBarTexture([=[Interface\Icons\Spell_Holy_Resurrection]=])
@@ -1371,8 +1266,6 @@ local unitSpecific = {
 			
 			local texObject = rescomm:GetStatusBarTexture()
 			texObject:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-			texObject:SetVertTile(false)
-			texObject:SetHorizTile(false)
 			
 			rescomm.OthersOnly = true
 			self.ResComm = rescomm
@@ -1433,13 +1326,11 @@ local unitSpecific = {
 		self.RaidInfo = raidInfo
 		
 		local leader = self.Leader
-		leader:SetHeight(8)
-		leader:SetWidth(8)
+		leader:SetSize(8, 8)
 		leader:SetPoint("CENTER", self, "TOPLEFT")
 		
 		local masterLooter = self.MasterLooter
-		masterLooter:SetHeight(8)
-		masterLooter:SetWidth(8)
+		masterLooter:SetSize(8, 8)
 		masterLooter:SetPoint("CENTER", self, "TOPLEFT", 8, 0)
 		
 		if (oUF.Indicators) then
@@ -1458,7 +1349,7 @@ local unitSpecific = {
 			self:Tag(auraStatus, oUF.Indicators["TR"])
 			
 			self.AuraStatusTopRight = auraStatus
-
+			
 			auraStatus = self:CreateFontString(nil, "ARTWORK")
 			auraStatus:ClearAllPoints()
 			auraStatus:SetPoint("BOTTOMLEFT", -2, 1)
@@ -1466,7 +1357,7 @@ local unitSpecific = {
 			self:Tag(auraStatus, oUF.Indicators["BL"])
 			
 			self.AuraStatusBottomLeft = auraStatus
-
+			
 			auraStatus = self:CreateFontString(nil, "ARTWORK")
 			auraStatus:SetPoint("CENTER", self, "BOTTOMRIGHT", 1, 1)
 			auraStatus:SetFont(gxMedia.symbolFont, 11, "THINOUTLINE")
@@ -1476,8 +1367,7 @@ local unitSpecific = {
 		end
 		
 		local role = self:CreateTexture(nil, "OVERLAY")
-		role:SetHeight(12)
-		role:SetWidth(12)
+		role:SetSize(8, 8)
 		role:SetPoint("CENTER", self, "TOPRIGHT")
 		
 		self.LFDRole = role
@@ -1524,7 +1414,11 @@ oUF:Factory(function(self)
 		"columnSpacing", 5,
 		"columnAnchorPoint", "LEFT",
 		"groupingOrder", "1,2,3,4,5,6,7,8",
-		"groupBy", "GROUP"
+		"groupBy", "GROUP",
+		'oUF-initialConfigFunction', [[
+			self:SetWidth(260)
+			self:SetHeight(48)
+		]]
 	)
 	group:SetPoint("CENTER", UIParent, "CENTER", 0, -275)
 	
@@ -1538,7 +1432,11 @@ oUF:Factory(function(self)
 		"maxColumns", 8,
 		"unitsPerColumn", 5,
 		"columnSpacing", 5,
-		"columnAnchorPoint", "LEFT"
+		"columnAnchorPoint", "LEFT",
+		'oUF-initialConfigFunction', [[
+			self:SetWidth(260)
+			self:SetHeight(48)
+		]]
 	)
 	groupPets:SetPoint("BOTTOMLEFT", group, "BOTTOMRIGHT", 5, 0)
 	
