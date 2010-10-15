@@ -4,7 +4,7 @@
 ## Version: r7
 ## Author: Guardix
 ## RequiredDeps: oUF
-## OptionalDeps: gxMedia, oUF_SpellRange, oUF_WeaponEnchant, oUF_HealComm4, oUF_Smooth, oUF_Experience, oUF_ResComm
+## OptionalDeps: gxMedia, oUF_SpellRange, oUF_WeaponEnchant, oUF_Smooth, oUF_Experience, oUF_ResComm
 
 layout.lua
 tags.lua
