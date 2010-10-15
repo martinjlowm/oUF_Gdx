@@ -304,7 +304,7 @@ if (class == "DRUID") then
 			return "|cffFF00FFM|r"
 		end
 	end
-	oUF.TagEvents["GotW"] = "UNIT_AURA"
+	oUF.TagEvents["MotW"] = "UNIT_AURA"
 	
 	oUF.Indicators["TL"] = "[Tree]"
 	oUF.Indicators["TR"] = "[MotW]"
