@@ -249,8 +249,7 @@ if (class == "DRUID") then
 		["Regrowth"] = GetSpellInfo(8936),
 		["Wild Growth"] = GetSpellInfo(48438),
 		["Tree of Life"] = GetSpellInfo(33891),
-		["Gift of the Wild"] = GetSpellInfo(48470),
-		["Mark of the Wild"] = GetSpellInfo(48469)
+		["Mark of the Wild"] = GetSpellInfo(1126)
 	}
 	local LBCount = {
 		4,
@@ -300,20 +299,20 @@ if (class == "DRUID") then
 	end
 	oUF.TagEvents["Tree"] = "UNIT_AURA"
 	
-	oUF.Tags["GotW"] = function(unit)
-		if (not (UnitAura(unit, spells["Gift of the Wild"]) or UnitAura(unit, spells["Mark of the Wild"]))) then
+	oUF.Tags["MotW"] = function(unit)
+		if (not UnitAura(unit, spells["Mark of the Wild"])) then
 			return "|cffFF00FFM|r"
 		end
 	end
 	oUF.TagEvents["GotW"] = "UNIT_AURA"
 	
 	oUF.Indicators["TL"] = "[Tree]"
-	oUF.Indicators["TR"] = "[GotW]"
+	oUF.Indicators["TR"] = "[MotW]"
 	oUF.Indicators["BL"] = "[Regrowth][WG]"
 	oUF.Indicators["BR"] = "[LB]"
 elseif (class == "DEATHKNIGHT") then
 	spells = {
-		["Horn of Winter"] = GetSpellInfo(57623)
+		["Horn of Winter"] = GetSpellInfo(57330)
 	}
 	oUF.Tags["HoW"] = function(unit)
 		if (UnitAura(unit, spells["Horn of Winter"])) then
@@ -327,44 +326,22 @@ elseif (class == "HUNTER") then
 	spells = {}
 elseif (class == "MAGE") then
 	spells = {
-		["Magic Concentration"] = GetSpellInfo(54646)
+		["Focus Magic"] = GetSpellInfo(54646)
 	}
-	oUF.Tags["MC"] = function(unit)
-		if (UnitAura(unit, spells["Magic Concentration"])) then
+	oUF.Tags["FM"] = function(unit)
+		if (UnitAura(unit, spells["Focus Magic"])) then
 			return "|cffffff00M|r"
 		end
 	end
-	oUF.TagEvents["MC"] = "UNIT_AURA"
+	oUF.TagEvents["FM"] = "UNIT_AURA"
 	
-	oUF.Indicators["TR"] = "[MC]"
+	oUF.Indicators["TR"] = "[FM]"
 elseif (class == "PALADIN") then
 	spells = {
 		["Beacon of Light"] = GetSpellInfo(53563),
 		["Blessing of Kings"] = GetSpellInfo(20217),
-		["Blessing of Might"] = GetSpellInfo(19740),
-		["Blessing of Sanctuary"] = GetSpellInfo(20911),
-		["Blessing of Wisdom"] = GetSpellInfo(19742),
-		["Greater Blessing of Kings"] = GetSpellInfo(25898),
-		["Greater Blessing of Might"] = GetSpellInfo(25782),
-		["Greater Blessing of Sanctuary"] = GetSpellInfo(25899),
-		["Greater Blessing of Wisdom"] = GetSpellInfo(25894),
-		["Sacred Shield"] = GetSpellInfo(53601)
+		["Blessing of Might"] = GetSpellInfo(19740)
 	}
-	
-	oUF.Tags["SS"] = function(unit)
-		if (UnitAura(unit, spells["Sacred Shield"])) then
-			return "|cffffff10M|r"
-		end
-	end
-	oUF.TagEvents["SS"] = "UNIT_AURA"
-	
-	oUF.Tags["sSS"] = function(unit)
-		local _, _, _, _, _, _, _, caster = UnitAura(unit, spells["Sacred Shield"])
-		if (caster and caster == "player") then
-			return "|cffff33ffM|r"
-		end
-	end
-	oUF.TagEvents["sSS"] = "UNIT_AURA"
 	
 	oUF.Tags["BoL"] = function(unit)
 		if (UnitAura(unit, spells["Beacon of Light"])) then
@@ -383,19 +360,12 @@ elseif (class == "PALADIN") then
 	
 	oUF.Tags["Blessing"] = function(unit)
 		if (not (select(8, UnitAura(unit, spells["Blessing of Kings"])) == "player" or
-			select(8, UnitAura(unit, spells["Blessing of Might"])) == "player" or
-			select(8, UnitAura(unit, spells["Blessing of Sanctuary"])) == "player" or
-			select(8, UnitAura(unit, spells["Blessing of Wisdom"])) == "player" or
-			select(8, UnitAura(unit, spells["Greater Blessing of Kings"])) == "player" or
-			select(8, UnitAura(unit, spells["Greater Blessing of Might"])) == "player" or
-			select(8, UnitAura(unit, spells["Greater Blessing of Sanctuary"])) == "player" or
-			select(8, UnitAura(unit, spells["Greater Blessing of Wisdom"])) == "player")) then
+			select(8, UnitAura(unit, spells["Blessing of Might"])) == "player")) then
 			return "|cffffff00M|r"
 		end
 	end
 	oUF.TagEvents["Blessing"] = "UNIT_AURA"
 	
-	oUF.Indicators["TL"] = "[sSS][SS]"
 	oUF.Indicators["TR"] = "[Blessing]"
 	oUF.Indicators["BR"] = "[sBoL][BoL]"
 elseif (class == "PRIEST") then
@@ -476,8 +446,8 @@ elseif (class == "ROGUE") then
 	spells = {}
 elseif (class == "SHAMAN") then
 	spells = {
-		["Earth Shield"] = GetSpellInfo(49284),
-		["Riptide"] = GetSpellInfo(61301)
+		["Earth Shield"] = GetSpellInfo(974),
+		["Riptide"] = GetSpellInfo(61295)
 	}
 	local earthCount = {
 		"i",
@@ -512,8 +482,8 @@ elseif (class == "WARLOCK") then
 	spells = {}
 elseif (class == "WARRIOR") then
 	spells = {
-		["Battle Shout"] = GetSpellInfo(47436),
-		["Commanding Shout"] = GetSpellInfo(47440),
+		["Battle Shout"] = GetSpellInfo(6673),
+		["Commanding Shout"] = GetSpellInfo(469),
 		["Vigilance"] = GetSpellInfo(50720)
 	}
 	oUF.Tags["BS"] = function(unit)
