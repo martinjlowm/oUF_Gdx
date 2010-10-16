@@ -1406,8 +1406,8 @@ oUF:Factory(function(self)
 		"groupingOrder", "1,2,3,4,5,6,7,8",
 		"groupBy", "GROUP",
 		'oUF-initialConfigFunction', [[
-			self:SetWidth(260)
-			self:SetHeight(48)
+			self:SetWidth(48)
+			self:SetHeight(32)
 		]]
 	)
 	group:SetPoint("CENTER", UIParent, "CENTER", 0, -275)
@@ -1424,8 +1424,8 @@ oUF:Factory(function(self)
 		"columnSpacing", 5,
 		"columnAnchorPoint", "LEFT",
 		'oUF-initialConfigFunction', [[
-			self:SetWidth(260)
-			self:SetHeight(48)
+			self:SetWidth(48)
+			self:SetHeight(32)
 		]]
 	)
 	groupPets:SetPoint("BOTTOMLEFT", group, "BOTTOMRIGHT", 5, 0)
