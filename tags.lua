@@ -410,7 +410,7 @@ elseif (class == "PRIEST") then
 	oUF.TagEvents["PW:S"] = "UNIT_AURA"
 	
 	oUF.Tags["PW:F"] = function(unit)
-		if (not UnitAura(unit, spells["Power Word: Fortitude"])) then
+		if (not (UnitAura(unit, spells["Power Word: Fortitude"]) or UnitAura(unit, GetSpellInfo(6307)))) then
 			return "|cff00A1DEM|r"
 		end
 	end
@@ -457,7 +457,8 @@ elseif (class == "SHAMAN") then
 		"p",
 		"q",
 		"Z",
-		"Y"
+		"Y",
+		"8"
 	}
 	
 	oUF.Tags["ES"] = function(unit)

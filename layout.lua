@@ -286,7 +286,7 @@ f.UNIT_AURA = function(self, unit)
 	end
 	
 	if (dis) then
-		if (dispellClass[dis] or cur or ( dis == "Poison" and unit == "player" and BaS )) then
+		if (dispellClass[dis] or cur) then
 			local col = DebuffTypeColor[dis]
 			frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
 			frame.Dispell = true
@@ -621,15 +621,6 @@ local UNIT_THREAT_SITUATION_UPDATE = function(self)
 	end
 end
 
-local RAID_TARGET_UPDATE = function(self, event)
-	local index = GetRaidTargetIndex(self.unit)
-	if (index) then
-		self.RIcon:SetText(ICON_LIST[index].."22|t")
-	else
-		self.RIcon:SetText()
-	end
-end
-
 local time, sumElapsed, dps, hps, damagetotal, healingtotal, pName = 0, 0, 0, 0, 0, 0, UnitName("player")
 local damage = {
 	SWING_DAMAGE = true,
@@ -664,7 +655,7 @@ local COMBAT_LOG_EVENT_UNFILTERED = function(self, _, _, eventType, _, name, _, 
 		healingtotal = (healingtotal or 0) + (amount - over)
 	end
 	
-	if (UnitAffectingCombat("player") and not self.Panel.DPS.start and damagetotal ~= 0 or healingtotal ~= 0) then
+	if (UnitAffectingCombat("player") and not self.Panel.DPS.start and (damagetotal ~= 0 or healingtotal ~= 0)) then
 		self.Panel.DPS.start = true
 	end
 end
@@ -956,16 +947,10 @@ local shared = function(self, unit, isSingle)
 		self.MasterLooter = masterlooter
 	end
 	
-	local ricon = self:CreateFontString(nil, "OVERLAY")
+	local ricon = self:CreateTexture(nil, "OVERLAY")
 	ricon:SetPoint("CENTER", self, "TOP")
-	ricon:SetFont(gxMedia.font, 18)
-	ricon:SetJustifyH("CENTER")
-	ricon:SetFontObject(GameFontNormalSmall)
-	ricon:SetTextColor(1, 1, 1)
 	
 	self.RIcon = ricon
-	self:RegisterEvent("RAID_TARGET_UPDATE", RAID_TARGET_UPDATE)
-	table.insert(self.__elements, RAID_TARGET_UPDATE)
 	
 	if (unit ~= "player" and unit ~= "boss") then
 		if (IsAddOnLoaded("oUF_SpellRange")) then
@@ -1034,6 +1019,7 @@ local unitSpecific = {
 		self:SetScript("OnUpdate", calculateDPSandHPS)
 		
 		self.Panel.DPS = dps
+		PLAYER_REGEN_ENABLED(self)
 		
 		local combat = self:CreateTexture(nil, "OVERLAY")
 		combat:SetVertexColor(.7, .15, .15)
@@ -1209,7 +1195,7 @@ local unitSpecific = {
 		
 		self.Panel:SetHeight(15)
 		
-		self.Panel.Info:SetPoint("BOTTOM", self, 0, 3)
+		self.Panel.Info:SetPoint("BOTTOM", self, 0, 1)
 		self:Tag(self.Panel.Info, "[nameColor][mediumName]")
 		
 		local castBar = self.Castbar
@@ -1217,12 +1203,12 @@ local unitSpecific = {
 		
 		local health = self.Health
 		health:SetHeight(22)
-		health.Text:SetPoint("BOTTOMRIGHT", self, -5, 3)
+		health.Text:SetPoint("BOTTOMRIGHT", self, -5, 1)
 		health.Text:SetJustifyH("RIGHT")
 		
 		local power = self.Power
 		power:SetHeight(5)
-		power.Text:SetPoint("BOTTOMLEFT", self, 5, 3)
+		power.Text:SetPoint("BOTTOMLEFT", self, 5, 1)
 		power.Text:SetJustifyH("LEFT")
 	end,
 	raid = function(self, unit, ...)
@@ -1257,7 +1243,7 @@ local unitSpecific = {
 			local texObject = rescomm:GetStatusBarTexture()
 			texObject:SetTexCoord(0.07, 0.93, 0.07, 0.93)
 			
-			rescomm.OthersOnly = true
+			--rescomm.OthersOnly = true
 			self.ResComm = rescomm
 		end
 		
@@ -1411,6 +1397,7 @@ oUF:Factory(function(self)
 		]]
 	)
 	group:SetPoint("CENTER", UIParent, "CENTER", 0, -275)
+	group:EnableMouse(nil)
 	
 	local groupPets = self:SpawnHeader(nil, "SecureGroupPetHeaderTemplate", "raid,party",
 		"showPlayer", true,
@@ -1429,6 +1416,7 @@ oUF:Factory(function(self)
 		]]
 	)
 	groupPets:SetPoint("BOTTOMLEFT", group, "BOTTOMRIGHT", 5, 0)
+	groupPets:EnableMouse(nil)
 	
 	self:SetActiveStyle("Gdx - Boss")
 	local prev
