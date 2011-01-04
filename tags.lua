@@ -119,7 +119,7 @@ oUF.Tags["raidHP"] = function(unit)
 	if (not unit) then
 		return
 	end
-	
+	local cur = UnitHealth(unit)
 	local def = oUF.Tags["missinghp"](unit)
 	local per = oUF.Tags["perhp"](unit)
 	local result
@@ -137,7 +137,7 @@ oUF.Tags["raidHP"] = function(unit)
 	
 	return result
 end
-oUF.TagEvents["raidHP"] = "UNIT_NAME_UPDATE UNIT_HEALTH UNIT_MAXHEALTH"
+oUF.TagEvents["raidHP"] = "UNIT_NAME_UPDATE UNIT_HEALTH UNIT_MAXHEALTH PARTY_MEMBERS_CHANGED RAID_ROSTER_UPDATE"
 
 local ShortValue = function(value)
 	if (value >= 1e6) then
@@ -234,23 +234,119 @@ end
 oUF.TagEvents["powerText"] = "UNIT_MAXPOWER UNIT_POWER UPDATE_SHAPESHIFT_FORM"
 
 
+local hasSilithid, hasShale -- If player is a hunter, we'll check if he has a pet for special abilities
+if(class == "HUNTER") then
+	local checkHunter = function()
+		if(GetPrimaryTalentTree() == 1) then
+			local petType
+			for i = 1, 5 do
+				petType = select(4, GetStablePetInfo(i)) -- Only works for english client
+				if(petType == "Silithid") then
+					hasSilithid = true
+				elseif(petType == "Shale Spider") then
+					hasShale = true
+				end
+			end
+		end
+	end
+	local hChecker = CreateFrame("Frame")
+	hChecker:SetScript("OnEvent", checkHunter)
+	hChecker:RegisterEvent("ACTIVE_TALENT_GROUP_CHANGED")
+end
+
+
 local _, class = UnitClass("player")
-local spells
+local spells = {}
 oUF.Indicators = {
 	["TL"] = "",
 	["TR"] = "",
 	["BL"] = "",
 	["BR"] = ""
 }
+
+-- Stamina
+local StaminaClasses = {
+	["WARRIOR"] = true,
+	["PRIEST"] = true,
+	["WARLOCK"] = true,
+	["HUNTER"] = true
+}
+if(StaminaClasses[class]) then
+	spells["Power Word: Fortitude"] = GetSpellInfo(21562)
+	spells["Commanding Shout"] = GetSpellInfo(469)
+	spells["Blood Pact"] = GetSpellInfo(6307)
+	spells["Qiraji Fortitude"] = GetSpellInfo(90364)
+	
+	oUF.Tags["Stamina"] = function(unit)
+		local hasPet = class == "HUNTER" and UnitCreatureFamily("pet") == "Silithid"
+		if (not (UnitAura(unit, spells["Power Word: Fortitude"]) or
+			UnitAura(unit, spells["Commanding Shout"]) or
+			UnitAura(unit, spells["Blood Pact"]) or
+			UnitAura(unit, spells["Qiraji Fortitude"])
+		)) then
+			return "|cffFF0000M|r"
+		end
+	end
+	oUF.TagEvents["Stamina"] = "UNIT_AURA"
+	
+	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Stamina]"
+end
+
+
+-- Stats
+local StatsClasses = {
+	["PALADIN"] = true,
+	["HUNTER"] = true,
+	["DRUID"] = true
+}
+if(StatsClasses[class]) then
+	spells["Embrace of the Shale Spider"] = GetSpellInfo(90363)
+	spells["Blessing of Kings"] = GetSpellInfo(20217)
+	spells["Mark of the Wild"] = GetSpellInfo(1126)
+	
+	oUF.Tags["Stats"] = function(unit)
+		if (not (UnitAura(unit, spells["Mark of the Wild"]) or
+			UnitAura(unit, spells["Blessing of Kings"]) or
+			UnitAura(unit, spells["Embrace of the Shale Spider"])
+			)) then
+			return "|cffffff00M|r"
+		end
+	end
+	oUF.TagEvents["Stats"] = "UNIT_AURA"
+	
+	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Stats]"
+end
+
+
+-- Mana increase
+local ManaClasses = {
+	["MAGE"] = true,
+	["WARLOCK"] = true
+}
+if(ManaClasses[class]) then
+	spells["Arcane Brilliance"] = GetSpellInfo(90363)
+	spells["Fel Intelligence"] = GetSpellInfo(20217)
+	
+	oUF.Tags["Mana"] = function(unit)
+		if (not (UnitAura(unit, spells["Arcane Brilliance"]) or 
+			UnitAura(unit, spells["Fel Intelligence"])
+			)) then
+			return "|cffffff00M|r"
+		end
+	end
+	oUF.TagEvents["Mana"] = "UNIT_AURA"
+	
+	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Mana]"
+end
+
+
 if (class == "DRUID") then
-	spells = {
-		["Lifebloom"] = GetSpellInfo(33763),
-		["Rejuvenation"] = GetSpellInfo(774),
-		["Regrowth"] = GetSpellInfo(8936),
-		["Wild Growth"] = GetSpellInfo(48438),
-		["Tree of Life"] = GetSpellInfo(33891),
-		["Mark of the Wild"] = GetSpellInfo(1126)
-	}
+	spells["Lifebloom"] = GetSpellInfo(33763)
+	spells["Rejuvenation"] = GetSpellInfo(774)
+	spells["Regrowth"] = GetSpellInfo(8936)
+	spells["Wild Growth"] = GetSpellInfo(48438)
+	spells["Tree of Life"] = GetSpellInfo(33891)
+	
 	local LBCount = {
 		4,
 		2,
@@ -271,7 +367,7 @@ if (class == "DRUID") then
 	oUF.TagEvents["LB"] = "UNIT_AURA"
 	
 	oUF.Tags["Rejuv"] = function(unit) 
-		local _, _,_,_,_,_,_, caster = UnitAura(unit, spells["Rejuvenation"])
+		local caster = select(8, UnitAura(unit, spells["Rejuvenation"]))
 		if (caster and caster == "player") then
 			return "|cff00FEBFM|r"
 		end
@@ -299,15 +395,7 @@ if (class == "DRUID") then
 	end
 	oUF.TagEvents["Tree"] = "UNIT_AURA"
 	
-	oUF.Tags["MotW"] = function(unit)
-		if (not UnitAura(unit, spells["Mark of the Wild"])) then
-			return "|cffFF00FFM|r"
-		end
-	end
-	oUF.TagEvents["MotW"] = "UNIT_AURA"
-	
 	oUF.Indicators["TL"] = "[Tree]"
-	oUF.Indicators["TR"] = "[MotW]"
 	oUF.Indicators["BL"] = "[Regrowth][WG]"
 	oUF.Indicators["BR"] = "[LB]"
 elseif (class == "DEATHKNIGHT") then
@@ -339,7 +427,6 @@ elseif (class == "MAGE") then
 elseif (class == "PALADIN") then
 	spells = {
 		["Beacon of Light"] = GetSpellInfo(53563),
-		["Blessing of Kings"] = GetSpellInfo(20217),
 		["Blessing of Might"] = GetSpellInfo(19740)
 	}
 	
@@ -358,26 +445,14 @@ elseif (class == "PALADIN") then
 	end
 	oUF.TagEvents["sBoL"] = "UNIT_AURA"
 	
-	oUF.Tags["Blessing"] = function(unit)
-		if (not (select(8, UnitAura(unit, spells["Blessing of Kings"])) == "player" or
-			select(8, UnitAura(unit, spells["Blessing of Might"])) == "player")) then
-			return "|cffffff00M|r"
-		end
-	end
-	oUF.TagEvents["Blessing"] = "UNIT_AURA"
-	
-	oUF.Indicators["TR"] = "[Blessing]"
 	oUF.Indicators["BR"] = "[sBoL][BoL]"
 elseif (class == "PRIEST") then
-	spells = {
-		["Fear Ward"] = GetSpellInfo(6346),
-		["Power Word: Fortitude"] = GetSpellInfo(21562),
-		["Power Word: Shield"] = GetSpellInfo(17),
-		["Prayer of Mending"] = GetSpellInfo(33076),
-		["Renew"] = GetSpellInfo(139),
-		["Shadow Protection"] = GetSpellInfo(27683),
-		["Weakened Soul"] = GetSpellInfo(6788)
-	}
+	spells["Fear Ward"] = GetSpellInfo(6346)
+	spells["Power Word: Shield"] = GetSpellInfo(17)
+	spells["Prayer of Mending"] = GetSpellInfo(33076)
+	spells["Renew"] = GetSpellInfo(139)
+	spells["Shadow Protection"] = GetSpellInfo(27683)
+	spells["Weakened Soul"] = GetSpellInfo(6788)
 	
 	oUF.Tags["FW"] = function(unit)
 		if (UnitAura(unit, spells["Fear Ward"])) then
@@ -439,7 +514,7 @@ elseif (class == "PRIEST") then
 	oUF.TagEvents["WS"] = "UNIT_AURA"
 	
 	oUF.Indicators["TL"] = "[PW:S][WS]"
-	oUF.Indicators["TR"] = "[SP][PW:F][FW]"
+	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[SP][FW]"
 	oUF.Indicators["BL"] = "[Renew]"
 	oUF.Indicators["BR"] = "[PoM]"
 elseif (class == "ROGUE") then

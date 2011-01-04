@@ -25,7 +25,6 @@ do
 		},
 		["PALADIN"] = {
 			["Poison"] = true,
-			["Magic"] = true,
 			["Disease"] = true,
 		},
 		["MAGE"] = {
@@ -59,6 +58,42 @@ local dispellPriority = {
 }
 
 local debuffs = setmetatable({
+	------------------------------
+	--	The Bastion of Twilight	--
+	------------------------------
+	-- Twilight Ascendant Council
+	[GetSpellInfo(92486)] = 10,	-- Gravity Crush
+	[GetSpellInfo(83099)] = 10,	-- Lightning Rod
+	
+	-- Valiona & Theralion
+	[GetSpellInfo(95639)] = 10,	-- Engulfing Magic
+	[GetSpellInfo(92864)] = 7,	-- Twilight Meteorite
+	
+	--------------------------
+	--	Blackwing Decent	--
+	--------------------------
+	-- Chimaeron
+	[GetSpellInfo(89084)] = 10,	-- Low Health
+	
+	-- Maloriak
+	[GetSpellInfo(92971)] = 10,	-- Consuming Flames
+	
+	-- Omnotron Defense System
+	[GetSpellInfo(92036)] = 5,	-- Acquiring Target
+	[GetSpellInfo(79889)] = 3,	-- Lightning Conductor
+	
+	----------------------
+	--	Shadowfang Keep	--
+	----------------------
+	-- Lord Godfrey
+	[GetSpellInfo(93761)] = 10,	-- Cursed Bullets
+	
+	------------------
+	--	Deadmines	--
+	------------------
+	-- Oaf Lackey
+	[GetSpellInfo(91016)] = 10,	-- Axe to the Head
+	
 	--------------------------
 	--	Icecrown Citadel	--
 	--------------------------
@@ -720,7 +755,7 @@ local shared = function(self, unit, isSingle)
 	
 	self:RegisterForClicks("AnyDown")
 	
-	if (unit == "player" or unit == "target" or unit == "targettarget" or unit == "pet" or unit == "focus" or unit == "boss") then
+	if (unit ~= "raid") then
 		local panel = CreateFrame("Frame", nil, self)
 		panel:SetFrameStrata("LOW")
 		panel:SetPoint("BOTTOMLEFT", self)
@@ -913,7 +948,6 @@ local shared = function(self, unit, isSingle)
 		local buffs = CreateFrame("Frame", nil, self)
 		buffs:SetHeight(27)
 		buffs:SetWidth(230)
-		buffs:SetFrameStrata("LOW")
 		buffs.size = 27
 		buffs.spacing = 2
 		buffs["growth-y"] = "UP"
@@ -928,7 +962,6 @@ local shared = function(self, unit, isSingle)
 		local debuffs = CreateFrame("Frame", nil, self)
 		debuffs:SetHeight(27)
 		debuffs:SetWidth(230)
-		debuffs:SetFrameStrata("LOW")
 		debuffs.size = 27
 		debuffs.spacing = 2
 		debuffs["growth-y"] = "UP"
@@ -939,18 +972,16 @@ local shared = function(self, unit, isSingle)
 		self.Debuffs = debuffs
 	end
 	
-	if (unit == "player" or unit == "target" or unit == "raid" or unit == "party") then
+	if (unit == "player" or unit == "target" or unit == "raid" or unit == "raidpet" or unit == "party") then
 		local leader = self:CreateTexture(nil, "OVERLAY")
 		self.Leader = leader
 		
-		local masterlooter = self:CreateTexture(nil, 'OVERLAY')
+		local masterlooter = self:CreateTexture(nil, "OVERLAY")
 		self.MasterLooter = masterlooter
 	end
 	
-	local ricon = self:CreateTexture(nil, "OVERLAY")
-	ricon:SetPoint("CENTER", self, "TOP")
-	
-	self.RIcon = ricon
+	local raidIcon = self:CreateTexture(nil, "OVERLAY")
+	self.RaidIcon = raidIcon
 	
 	if (unit ~= "player" and unit ~= "boss") then
 		if (IsAddOnLoaded("oUF_SpellRange")) then
@@ -1039,6 +1070,10 @@ local unitSpecific = {
 		masterLooter:SetWidth(16)
 		masterLooter:SetPoint("CENTER", self, "TOPLEFT", 16, 0)
 		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(24, 24)
+		raidIcon:SetPoint("RIGHT", health, "RIGHT", -1, 1)
+		
 		if (IsAddOnLoaded("oUF_WeaponEnchant")) then
 			local enchant = CreateFrame("Frame", nil, self)
 			enchant:SetHeight(27)
@@ -1102,6 +1137,10 @@ local unitSpecific = {
 		debuffs:SetPoint("BOTTOMLEFT", self, "TOPLEFT", 0, 3)
 		debuffs.initialAnchor = "BOTTOMLEFT"
 		debuffs["growth-x"] = "RIGHT"
+		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(16, 16)
+		raidIcon:SetPoint("CENTER", health, "CENTER", 0, 1)
 	end,
 	target = function(self, unit, ...)
 		self:SetSize(230, 55)
@@ -1147,6 +1186,10 @@ local unitSpecific = {
 		local masterLooter = self.MasterLooter
 		masterLooter:SetSize(16, 16)
 		masterLooter:SetPoint("CENTER", self, "TOPRIGHT", -16, 0)
+		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(24, 24)
+		raidIcon:SetPoint("LEFT", health, "LEFT", 1, 1)
 	end,
 	targettarget = function(self, unit, ...)
 		self:SetSize(115, 35)
@@ -1166,6 +1209,10 @@ local unitSpecific = {
 		debuffs:SetPoint("BOTTOMRIGHT", self, "TOPRIGHT", 0, 3)
 		debuffs.initialAnchor = "BOTTOMRIGHT"
 		debuffs["growth-x"] = "LEFT"
+		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(16, 16)
+		raidIcon:SetPoint("CENTER", health, "CENTER", 0, 1)
 	end,
 	focus = function(self, unit, ...)
 		self:SetSize(115, 35)
@@ -1187,6 +1234,10 @@ local unitSpecific = {
 		power:SetHeight(2)
 		power:SetStatusBarColor(.1,.1,.1)
 		power.Reverse = true
+		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(16, 16)
+		raidIcon:SetPoint("CENTER", health, "CENTER", 0, 1)
 	end,
 	boss = function(self, unit, ...)
 		self:SetSize(200, 40)
@@ -1210,6 +1261,10 @@ local unitSpecific = {
 		power:SetHeight(5)
 		power.Text:SetPoint("BOTTOMLEFT", self, 5, 1)
 		power.Text:SetJustifyH("LEFT")
+		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(24, 24)
+		raidIcon:SetPoint("CENTER", health, "CENTER")
 	end,
 	raid = function(self, unit, ...)
 		self:SetSize(48, 32)
@@ -1309,6 +1364,10 @@ local unitSpecific = {
 		masterLooter:SetSize(8, 8)
 		masterLooter:SetPoint("CENTER", self, "TOPLEFT", 8, 0)
 		
+		local raidIcon = self.RaidIcon
+		raidIcon:SetSize(16, 16)
+		raidIcon:SetPoint("CENTER", health, "TOP")
+		
 		if (oUF.Indicators) then
 			local auraStatus
 			
@@ -1349,7 +1408,7 @@ local unitSpecific = {
 		self.LFDRole = role
 	end,
 }
- 
+
 oUF:RegisterStyle("Gdx", shared)
 
 for unit, layoutFunc in next, unitSpecific do
