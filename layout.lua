@@ -1278,8 +1278,8 @@ local unitSpecific = {
 		health:SetOrientation("VERTICAL")
 		
 		local heal = CreateFrame('StatusBar', nil, health)
-		heal:SetHeight(0)
-		heal:SetWidth(0)
+		heal:SetWidth(48)
+		heal:SetHeight(48)
 		heal:SetStatusBarTexture(gxMedia.statusBar)
 		heal:SetStatusBarColor(0, 1, 0, 0.4)
 		heal:SetPoint("BOTTOM", health, "BOTTOM")
