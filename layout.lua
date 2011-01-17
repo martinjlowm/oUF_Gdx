@@ -1277,12 +1277,14 @@ local unitSpecific = {
 		health.Smooth = nil
 		health:SetOrientation("VERTICAL")
 		
+		local healthTex = health:GetStatusBarTexture()
 		local heal = CreateFrame('StatusBar', nil, health)
+		heal:SetHeight(32)
 		heal:SetWidth(48)
-		heal:SetHeight(48)
+		heal:SetOrientation("VERTICAL")
 		heal:SetStatusBarTexture(gxMedia.statusBar)
 		heal:SetStatusBarColor(0, 1, 0, 0.4)
-		heal:SetPoint("BOTTOM", health, "BOTTOM")
+		heal:SetPoint("BOTTOM", healthTex, "TOP")
 		
 		self.HealPrediction = {
 			otherBar = heal,
