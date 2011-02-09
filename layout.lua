@@ -58,6 +58,15 @@ local dispellPriority = {
 }
 
 local debuffs = setmetatable({
+	----------------------------------
+	--	Throne of the Four Winds	--
+	----------------------------------
+	-- Al'Akir
+	[GetSpellInfo(87621)] = 10,	-- Squall Line
+	
+	-- Conclave of Wind
+	[GetSpellInfo(93130)] = 10,	-- Ice Patch
+	
 	------------------------------
 	--	The Bastion of Twilight	--
 	------------------------------
@@ -72,11 +81,15 @@ local debuffs = setmetatable({
 	--------------------------
 	--	Blackwing Decent	--
 	--------------------------
+	-- Magmaw Trash
+	[GetSpellInfo(91911)] = 10,	-- Constricting Chains
+	
 	-- Chimaeron
 	[GetSpellInfo(89084)] = 10,	-- Low Health
 	
 	-- Maloriak
-	[GetSpellInfo(92971)] = 10,	-- Consuming Flames
+	[GetSpellInfo(92754)] = 10,	-- Engulfing Darkness
+	[GetSpellInfo(92971)] = 7,	-- Consuming Flames
 	
 	-- Omnotron Defense System
 	[GetSpellInfo(92036)] = 5,	-- Acquiring Target
@@ -277,6 +290,53 @@ local debuffs = setmetatable({
 	[GetSpellInfo(5484)] = 8,	-- Howl of Terror
 }, { __index = function() return 0 end })
 
+local cdBuffs = {
+	--------------------------
+	--	Survival Cooldowns	--
+	--------------------------
+	-- Death Knight
+	[GetSpellInfo(48707)] = true,	-- Anti-Magic Shell
+	[GetSpellInfo(50461)] = true,	-- Anti-Magic Zone
+	[GetSpellInfo(49222)] = true,	-- Bone Shield
+	[GetSpellInfo(48792)] = true,	-- Icebound Fortitude
+	[GetSpellInfo(55233)] = true,	-- Vampiric Blood
+	
+	-- Druid
+	[GetSpellInfo(22812)] = true,	-- Barkskin
+	[GetSpellInfo(22842)] = true,	-- Frenzied Regeneration
+	[GetSpellInfo(61336)] = true,	-- Survival Instincts
+	
+	-- Mage
+	[GetSpellInfo(45438)] = true,	-- Ice Block
+	
+	-- Paladin
+	[GetSpellInfo(86659)] = true,	-- Guardian of Ancient Kings
+	[GetSpellInfo(31850)] = true,	-- Ardent Defender
+	[GetSpellInfo(70940)] = true,	-- Divine Guardian
+	[GetSpellInfo(498)] = true,		-- Divine Protection
+	[GetSpellInfo(64205)] = true,	-- Divine Sacrifice
+	[GetSpellInfo(642)] = true,		-- Divine Shield
+	[GetSpellInfo(1022)] = true,	-- Hand of Protection
+	[GetSpellInfo(6940)] = true,	-- Hand of Sacrifice
+	
+	-- Priest
+	[GetSpellInfo(47585)] = true,	-- Dispersion
+	[GetSpellInfo(47788)] = true,	-- Guardian Spirit
+	[GetSpellInfo(33206)] = true,	-- Pain Suppression
+	[GetSpellInfo(81782)] = true,	-- Power Word: Barrier
+	
+	-- Rogue
+	[GetSpellInfo(31224)] = true,	-- Cloak of Shadows
+	[GetSpellInfo(1966)] = true,	-- Feint
+	
+	-- Shaman
+	[GetSpellInfo(30823)] = true,	-- Shamanistic Rage
+	
+	-- Warrior
+	[GetSpellInfo(12975)] = true,	-- Last Stand
+	[GetSpellInfo(2565)] = true,	-- Shield Block
+	[GetSpellInfo(871)] = true,		-- Shield Wall
+}
 
 local f = CreateFrame("Frame")
 f:SetScript("OnEvent", function(self, event, ...)
@@ -293,9 +353,13 @@ f.UNIT_AURA = function(self, unit)
 		return
 	end
 	local cur, tex, dis, timeLeft, Duration, stack
-	local name, rank, buffTexture, count, duration, expire, dtype, isPlayer
-	for i = 1, 40 do
-		name, rank, buffTexture, count, dtype, duration, expire, isPlayer = UnitAura(unit, i, "HARMFUL")
+	local name, buffTexture, count, duration, expire, dtype
+	local i
+	
+	i = 1
+	while true do
+		name, _, buffTexture, count, dtype, duration, expire = UnitAura(unit, i, "HARMFUL")
+		
 		if (not name) then
 			break
 		end
@@ -316,13 +380,36 @@ f.UNIT_AURA = function(self, unit)
 					Duration = duration
 					stack = count > 1 and count or ""
 				end
-			end	
+			end
 		end
+		i = i + 1
+	end
+	
+	i = 1
+	while true do
+		name, _, buffTexture, count, dtype, duration, expire = UnitBuff(unit, i)
+		
+		if (not name) then
+			break
+		end
+		
+		if (cdBuffs[name]) then
+			cur = name
+			tex = buffTexture
+			dis = dtype or "none"
+			timeLeft = expire
+			Duration = duration
+			stack = count > 1 and count or ""
+			
+			break
+		end
+		
+		i = i + 1
 	end
 	
 	if (dis) then
 		if (dispellClass[dis] or cur) then
-			local col = DebuffTypeColor[dis]
+			local col = not cdBuffs[name] and DebuffTypeColor[dis] or {r = 1, g = 1, b = 0}
 			frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
 			frame.Dispell = true
 			frame.DebuffIcon.Count:SetText(stack)
@@ -926,6 +1013,8 @@ local shared = function(self, unit, isSingle)
 		
 		if (unit ~= "target" and unit ~= "boss") then
 			bg:SetVertexColor(.1,.1,.1)
+		else
+			pp:SetStatusBarColor(.1, .1, .1)
 		end
 		
 		if (unit == "player" or unit == "target" or unit == "boss") then
@@ -1261,6 +1350,7 @@ local unitSpecific = {
 		power:SetHeight(5)
 		power.Text:SetPoint("BOTTOMLEFT", self, 5, 1)
 		power.Text:SetJustifyH("LEFT")
+		power.Reverse = true
 		
 		local raidIcon = self.RaidIcon
 		raidIcon:SetSize(24, 24)
@@ -1487,7 +1577,7 @@ oUF:Factory(function(self)
 		if (prev) then
 			boss:SetPoint("TOP", prev, "BOTTOM", 0, -10)
 		else
-			boss:SetPoint("TOPRIGHT", UIParent, -25, -25)
+			boss:SetPoint("TOPRIGHT", UIParent, -50, -50)
 		end
 		
 		prev = boss
