@@ -21,7 +21,7 @@ oUF.Tags["diffColor"] = function(unit)
 			r, g, b = 0.55, 0.57, 0.61
 		end
 	end
-	
+
 	return string.format("|cff%02x%02x%02x", r * 255, g * 255, b * 255)
 end
 oUF.TagEvents["diffColor"] = "UNIT_LEVEL"
@@ -75,7 +75,7 @@ local utf8sub = function(string, i, dots)
 				break
 			end
 		end
-		
+
 		if (len == i and pos <= bytes) then
 			return string:sub(1, pos - 1)..(dots and "..." or "")
 		else
@@ -98,7 +98,7 @@ oUF.Tags["mediumName"] = function(unit)
 	if (not name) then
 		return
 	end
-	
+
 	if (unit == "pet" and name == "Unknown") then
 		return "Pet"
 	else
@@ -134,7 +134,7 @@ oUF.Tags["raidHP"] = function(unit)
 	else
 		result = utf8sub(UnitName(unit), 4) or "N/A"
 	end
-	
+
 	return result
 end
 oUF.TagEvents["raidHP"] = "UNIT_NAME_UPDATE UNIT_HEALTH UNIT_MAXHEALTH PARTY_MEMBERS_CHANGED RAID_ROSTER_UPDATE"
@@ -153,9 +153,9 @@ oUF.Tags["healthText"] = function(unit)
 	if (not unit) then
 		return
 	end
-	
+
 	local cur, max = UnitHealth(unit), UnitHealthMax(unit)
-	
+
 	if (not UnitIsConnected(unit)) then
 		result = "|cffD7BEA5Offline|r"
 	elseif (UnitIsDead(unit)) then
@@ -174,7 +174,7 @@ oUF.Tags["healthText"] = function(unit)
 			result = "|cff559655"..max.."|r"
 		end
 	end
-	
+
 	return result
 end
 oUF.TagEvents["healthText"] = "UNIT_HEALTH UNIT_MAXHEALTH"
@@ -197,12 +197,12 @@ oUF.Tags["powerText"] = function(unit)
 	if (not unit) then
 		return
 	end
-	
+
 	local r, g, b, t
 	local cur, max = UnitPower(unit), UnitPowerMax(unit)
 	local pType, pToken = UnitPowerType(unit)
 	local t = power[pToken]
-	
+
 	if (t) then
 		r, g, b = t[1], t[2], t[3]
 	else
@@ -228,7 +228,7 @@ oUF.Tags["powerText"] = function(unit)
 			result = format("|cff%02x%02x%02x%s|r", r*255, g*255, b*255, cur)
 		end
 	end
-	
+
 	return result
 end
 oUF.TagEvents["powerText"] = "UNIT_MAXPOWER UNIT_POWER UPDATE_SHAPESHIFT_FORM"
@@ -276,7 +276,7 @@ if(StaminaClasses[class]) then
 	spells["Commanding Shout"] = GetSpellInfo(469)
 	spells["Blood Pact"] = GetSpellInfo(6307)
 	spells["Qiraji Fortitude"] = GetSpellInfo(90364)
-	
+
 	oUF.Tags["Stamina"] = function(unit)
 		local hasPet = class == "HUNTER" and UnitCreatureFamily("pet") == "Silithid"
 		if (not (UnitAura(unit, spells["Power Word: Fortitude"]) or
@@ -288,7 +288,7 @@ if(StaminaClasses[class]) then
 		end
 	end
 	oUF.TagEvents["Stamina"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Stamina]"
 end
 
@@ -303,7 +303,7 @@ if(StatsClasses[class]) then
 	spells["Embrace of the Shale Spider"] = GetSpellInfo(90363)
 	spells["Blessing of Kings"] = GetSpellInfo(20217)
 	spells["Mark of the Wild"] = GetSpellInfo(1126)
-	
+
 	oUF.Tags["Stats"] = function(unit)
 		if (not (UnitAura(unit, spells["Mark of the Wild"]) or
 			UnitAura(unit, spells["Blessing of Kings"]) or
@@ -313,7 +313,7 @@ if(StatsClasses[class]) then
 		end
 	end
 	oUF.TagEvents["Stats"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Stats]"
 end
 
@@ -327,17 +327,17 @@ if(ManaClasses[class]) then
 	spells["Arcane Brilliance"] = GetSpellInfo(1459)
 	spells["Dalaran Brilliance"] = GetSpellInfo(61316)
 	spells["Fel Intelligence"] = GetSpellInfo(54424)
-	
+
 	oUF.Tags["Mana"] = function(unit)
-		if (not (UnitAura(unit, spells["Arcane Brilliance"]) or 
-			UnitAura(unit, spells["Fel Intelligence"]) or 
+		if (not (UnitAura(unit, spells["Arcane Brilliance"]) or
+			UnitAura(unit, spells["Fel Intelligence"]) or
 			UnitAura(unit, spells["Dalaran Brilliance"])
 			)) then
 			return "|cffffff00M|r"
 		end
 	end
 	oUF.TagEvents["Mana"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[Mana]"
 end
 
@@ -348,13 +348,13 @@ if (class == "DRUID") then
 	spells["Regrowth"] = GetSpellInfo(8936)
 	spells["Wild Growth"] = GetSpellInfo(48438)
 	spells["Tree of Life"] = GetSpellInfo(33891)
-	
+
 	local LBCount = {
 		4,
 		2,
 		3
 	}
-	oUF.Tags["LB"] = function(unit) 
+	oUF.Tags["LB"] = function(unit)
 		local _, _, _, count, _, _, expirationTime, caster = UnitAura(unit, spells["Lifebloom"])
 		if (caster and caster == "player") then
 			local timeLeft = GetTime() - expirationTime
@@ -364,77 +364,77 @@ if (class == "DRUID") then
 				return "|cffA7FD0A"..LBCount[count].."|r"
 			end
 		end
-		
+
 	end
 	oUF.TagEvents["LB"] = "UNIT_AURA"
-	
-	oUF.Tags["Rejuv"] = function(unit) 
+
+	oUF.Tags["Rejuv"] = function(unit)
 		local caster = select(8, UnitAura(unit, spells["Rejuvenation"]))
 		if (caster and caster == "player") then
 			return "|cff00FEBFM|r"
 		end
 	end
 	oUF.TagEvents["Rejuv"] = "UNIT_AURA"
-	
+
 	oUF.Tags["Regrowth"] = function(unit)
 		if (UnitAura(unit, spells["Regrowth"])) then
 			return "|cff00FF10M|r"
 		end
 	end
 	oUF.TagEvents["Regrowth"] = "UNIT_AURA"
-	
+
 	oUF.Tags["WG"] = function(unit)
 		if (UnitAura(unit, spells["Wild Growth"])) then
 			return "|cff33FF33M|r"
 		end
 	end
 	oUF.TagEvents["WG"] = "UNIT_AURA"
-	
+
 	oUF.Tags["Tree"] = function(unit)
 		if (UnitAura(unit, spells["Tree of Life"])) then
 			return "|cff33FF33M|r"
 		end
 	end
 	oUF.TagEvents["Tree"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TL"] = "[Tree]"
 	oUF.Indicators["BL"] = "[Regrowth][WG]"
 	oUF.Indicators["BR"] = "[LB]"
 elseif (class == "DEATHKNIGHT") then
 	spells["Horn of Winter"] = GetSpellInfo(57330)
-	
+
 	oUF.Tags["HoW"] = function(unit)
 		if (UnitAura(unit, spells["Horn of Winter"])) then
 			return "|cffffff10M|r"
 		end
 	end
 	oUF.TagEvents["HoW"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TR"] = "[HoW]"
 elseif (class == "HUNTER") then
-	
+
 elseif (class == "MAGE") then
 	spells["Focus Magic"] = GetSpellInfo(54646)
-	
+
 	oUF.Tags["FM"] = function(unit)
 		if (UnitAura(unit, spells["Focus Magic"])) then
 			return "|cffffff00M|r"
 		end
 	end
 	oUF.TagEvents["FM"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TR"] = "[FM]"
 elseif (class == "PALADIN") then
 	spells["Beacon of Light"] = GetSpellInfo(53563)
 	spells["Blessing of Might"] = GetSpellInfo(19740)
-	
+
 	oUF.Tags["BoL"] = function(unit)
 		if (UnitAura(unit, spells["Beacon of Light"])) then
 			return "|cffffff10M|r"
 		end
 	end
 	oUF.TagEvents["BoL"] = "UNIT_AURA"
-	
+
 	oUF.Tags["sBoL"] = function(unit)
 		local _, _, _, _, _, _, _, caster = UnitAura(unit, spells["Beacon of Light"])
 		if (caster and caster == "player") then
@@ -442,7 +442,7 @@ elseif (class == "PALADIN") then
 		end
 	end
 	oUF.TagEvents["sBoL"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["BR"] = "[sBoL][BoL]"
 elseif (class == "PRIEST") then
 	spells["Fear Ward"] = GetSpellInfo(6346)
@@ -451,14 +451,14 @@ elseif (class == "PRIEST") then
 	spells["Renew"] = GetSpellInfo(139)
 	spells["Shadow Protection"] = GetSpellInfo(27683)
 	spells["Weakened Soul"] = GetSpellInfo(6788)
-	
+
 	oUF.Tags["FW"] = function(unit)
 		if (UnitAura(unit, spells["Fear Ward"])) then
 			return "|cff8B4513M|r"
 		end
 	end
 	oUF.TagEvents["FW"] = "UNIT_AURA"
-	
+
 	local PoMCount = {
 		"i",
 		"h",
@@ -474,28 +474,28 @@ elseif (class == "PRIEST") then
 		end
 	end
 	oUF.TagEvents["PoM"] = "UNIT_AURA"
-	
+
 	oUF.Tags["PW:S"] = function(unit)
 		if (UnitAura(unit, spells["Power Word: Shield"])) then
 			return "|cff33FF33M|r"
 		end
 	end
 	oUF.TagEvents["PW:S"] = "UNIT_AURA"
-	
+
 	oUF.Tags["PW:F"] = function(unit)
 		if (not (UnitAura(unit, spells["Power Word: Fortitude"]) or UnitAura(unit, GetSpellInfo(6307)))) then
 			return "|cff00A1DEM|r"
 		end
 	end
 	oUF.TagEvents["PW:F"] = "UNIT_AURA"
-	
+
 	oUF.Tags["SP"] = function(unit)
 		if (not UnitAura(unit, spells["Shadow Protection"])) then
 			return "|cff9900FFM|r"
 		end
 	end
 	oUF.TagEvents["SP"] = "UNIT_AURA"
-	
+
 	oUF.Tags["Renew"] = function(unit)
 		local _, _, _, _, _, _, _, caster = UnitAura(unit, spells["Renew"])
 		if (caster and caster == "player") then
@@ -503,24 +503,24 @@ elseif (class == "PRIEST") then
 		end
 	end
 	oUF.TagEvents["Renew"] = "UNIT_AURA"
-	
+
 	oUF.Tags["WS"] = function(unit)
 		if (UnitDebuff(unit, spells["Weakened Soul"])) then
 			return "|cffFF9900M|r"
 		end
 	end
 	oUF.TagEvents["WS"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TL"] = "[PW:S][WS]"
 	oUF.Indicators["TR"] = oUF.Indicators["TR"] .. "[SP][FW]"
 	oUF.Indicators["BL"] = "[Renew]"
 	oUF.Indicators["BR"] = "[PoM]"
 elseif (class == "ROGUE") then
-	
+
 elseif (class == "SHAMAN") then
 	spells["Earth Shield"] = GetSpellInfo(974)
 	spells["Riptide"] = GetSpellInfo(61295)
-	
+
 	local earthCount = {
 		"i",
 		"h",
@@ -532,7 +532,7 @@ elseif (class == "SHAMAN") then
 		"Y",
 		"8"
 	}
-	
+
 	oUF.Tags["ES"] = function(unit)
 		local _, _, _, count = UnitAura(unit, spells["Earth Shield"])
 		if (count) then
@@ -540,38 +540,38 @@ elseif (class == "SHAMAN") then
 		end
 	end
 	oUF.TagEvents["ES"] = "UNIT_AURA"
-	
-	oUF.Tags["Riptide"] = function(unit) 
+
+	oUF.Tags["Riptide"] = function(unit)
 		local _, _, _, _, _, _, _, caster = UnitAura(unit, spells["Riptide"])
 		if (caster and caster == "player") then
 			return "|cff00FEBFM|r"
 		end
 	end
 	oUF.TagEvents["Riptide"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TL"] = "[Riptide]"
 	oUF.Indicators["BR"] = "[ES]"
 elseif (class == "WARLOCK") then
-	
+
 elseif (class == "WARRIOR") then
 	spells["Battle Shout"] = GetSpellInfo(6673)
 	spells["Commanding Shout"] = GetSpellInfo(469)
 	spells["Vigilance"] = GetSpellInfo(50720)
-	
+
 	oUF.Tags["BS"] = function(unit)
 		if (UnitAura(unit, spells["Battle Shout"])) then
 			return "|cffff0000M|r"
 		end
 	end
 	oUF.TagEvents["BS"] = "UNIT_AURA"
-	
+
 	oUF.Tags["CS"] = function(unit)
 		if (UnitAura(unit, spells["Commanding Shout"])) then
 			return "|cffffff00M|r"
 		end
 	end
 	oUF.TagEvents["CS"] = "UNIT_AURA"
-	
+
 	oUF.Tags["Vigilance"] = function(unit)
 		local _, _, _, _, _, _, _, caster = UnitAura(unit, spells["Vigilance"])
 		if (caster and caster == "player") then
@@ -579,7 +579,7 @@ elseif (class == "WARRIOR") then
 		end
 	end
 	oUF.TagEvents["Vigilance"] = "UNIT_AURA"
-	
+
 	oUF.Indicators["TL"] = "[Vigilance]"
 	oUF.Indicators["TR"] = "[BS][CS]"
 end
