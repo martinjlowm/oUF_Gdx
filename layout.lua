@@ -1341,3 +1341,7 @@ oUF:Factory(function(self)
 	TemporaryEnchantFrame:Hide()
 	BuffFrame:Hide()
 end)
+
+if TEST_BRIDGE then
+    TEST_BRIDGE.UNIT_AURA = UNIT_AURA
+end
