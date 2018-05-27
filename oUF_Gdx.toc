@@ -7,8 +7,10 @@
 ## OptionalDeps: gxMedia, oUF_SpellRange, oUF_WeaponEnchant, oUF_Smooth, oUF_Experience
 
 libs\AceLibrary\AceLibrary.lua
+libs\AceOO-2.0\AceOO-2.0.lua
+libs\AceEvent-2.0\AceEvent-2.0.lua
 libs\RosterLib-2.0\RosterLib-2.0.lua
 libs\Banzai-1.0\Banzai-1.0.lua
 
-tags.lua
-layout.lua
+src\tags.lua
+src\layout.lua

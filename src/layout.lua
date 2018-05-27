@@ -14,9 +14,9 @@ local sgsub = string.gsub
 local CreateFrame = CreateFrame
 local UnitMana, UnitManaMax = UnitMana, UnitManaMax
 local UnitHealth, UnitHealthMax = UnitHealth, UnitHealthMax
-local UnitAura = UnitAura
 local UnitIsConnected = UnitIsConnected
 local UnitReaction = UnitReaction
+local UnitAura = UnitAura
 local UnitClass = UnitClass
 local UnitIsConnected = UnitIsConnected
 local UnitIsUnit = UnitIsUnit
@@ -25,6 +25,7 @@ local UnitIsTapped, UnitIsTappedByPlayer = UnitIsTapped, UnitIsTappedByPlayer
 local units = {}
 local dispellClass
 local _, class = UnitClass("player")
+
 do
     local t = {
         ["PRIEST"] = {
@@ -156,8 +157,8 @@ local cdBuffs = {
     ['Innervate'] = true,
 
     -- Warrior
-    ['Last Stand'] = true,	-- Last Stand
-    ['Shield Wall'] = true,     -- Shield Wall
+    ['Last Stand'] = true,
+    ['Shield Wall'] = true,
 }
 
 local function UNIT_AURA(frame, event, unit)
@@ -166,16 +167,10 @@ local function UNIT_AURA(frame, event, unit)
     end
 
     local name, icon, count, auraType, duration, expire
-
     for i = 1, 32 do
         local nextName, _, nextIcon, nextCount, nextDebuffType, nextDuration, nextExpire =
             UnitAura(unit, i, 'HARMFUL')
 
-        if not nextName then
-            break
-        end
-
-        -- print(debuffs['Frost Blast'] > 0 and debuffs['Frost Blast'] >= debuffs[name or 1])
         local isHigherPriority = debuffs[nextName] > 0 and debuffs[nextName] >= debuffs[name or 1]
         isHigherPriority = dispellPriority[nextDebuffType] > dispellPriority[auraType] or isHigherPriority
 
@@ -183,6 +178,10 @@ local function UNIT_AURA(frame, event, unit)
             nextName, _, nextIcon, nextCount, nextDebuffType, nextDuration, nextExpire =
                 UnitAura(unit, i)
             isHigherPriority = cdBuffs[nextName]
+        end
+
+        if not nextName then
+            break
         end
 
         if isHigherPriority then
@@ -195,30 +194,27 @@ local function UNIT_AURA(frame, event, unit)
         end
     end
 
+    if not name or (UnitReaction(unit, 'player') or 0) < 5 then
+        frame.DebuffIcon:Hide()
+        return
+    end
+
     duration = duration or 0
 
-    -- TODO: Debuffs in `debuffs' aren't shown
-    if auraType then
-        if (dispellClass[auraType]) and (UnitReaction(unit, 'player') or 0) > 4 then
-            local col = not cdBuffs[name] and DebuffTypeColor[auraType] or
-                { r = 1, g = 1, b = 0 }
-            frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
-            frame.Dispell = true
-            frame.DebuffIcon.Count:SetText(count)
-            frame.DebuffIcon.Texture:SetTexture(icon)
-            frame.DebuffIcon:Show()
+    if dispellClass[auraType] or debuffs[name] > 0 or cdBuffs[name] then
+        local col = not cdBuffs[name] and DebuffTypeColor[auraType] or
+            { r = 1, g = 1, b = 0 }
+        frame.DebuffIcon.Overlay:SetVertexColor(col.r, col.g, col.b)
+        frame.DebuffIcon.Count:SetText(count)
+        frame.DebuffIcon.Texture:SetTexture(icon)
+        frame.DebuffIcon:Show()
 
-            if duration > 0 then
-                CooldownFrame_SetTimer(frame.DebuffIcon.Cooldown, expire - duration, duration, 1)
-            end
-        elseif frame.Dispell then
-            frame.Dispell = false
-            frame.DebuffIcon:Hide()
+        if duration > 0 then
+            frame.DebuffIcon.Count:SetParent(frame.DebuffIcon.Cooldown)
+            CooldownFrame_SetTimer(frame.DebuffIcon.Cooldown, expire - duration, duration, 1)
+        else
+            frame.DebuffIcon.Count:SetParent(frame.DebuffIcon)
         end
-    else
-        -- CooldownFrame_SetTimer(frame.DebuffIcon.Cooldown, 0, 0, 0)
-        -- frame.DebuffIcon.Count:SetText()
-        frame.DebuffIcon:Hide()
     end
 end
 
@@ -447,6 +443,12 @@ local PostUpdateIcon = function(self, unit, icon, index, n)
     end
 
     icon.overlay:SetVertexColor(color.r, color.g, color.b)
+
+    if icon.cd:IsShown() then
+        icon.count:SetParent(icon.cd)
+    else
+        icon.count:SetParent(icon)
+    end
 end
 
 local auraPostCreateIcon = function(icons, button, enchantArg)
@@ -483,10 +485,10 @@ local auraPostCreateIcon = function(icons, button, enchantArg)
     button.cd:SetHeight(button.cd:GetHeight() - 4)
     button.cd.reverse = true
 
-    button.count:SetParent(button)
-    button.count:SetPoint("BOTTOMRIGHT", 0, 1)
+    button.count:SetParent(button.cd)
+    button.count:SetPoint("BOTTOMRIGHT", 2, -1)
     button.count:SetJustifyH("RIGHT")
-    button.count:SetFont(gxMedia.font, 10, "OUTLINE")
+    button.count:SetFont(gxMedia.font, 12, "OUTLINE")
     button.count:SetTextColor(0.84, 0.75, 0.65)
 
     icons.showDebuffType = true
@@ -1312,7 +1314,7 @@ oUF:Factory(function(self)
                 self:SetHeight(32)
             end
 	)
-	group:SetPoint('CENTER', UIParent, 'CENTER', 0, -275)
+	group:SetPoint('CENTER', UIParent, 'CENTER', 0, -230)
 	group:EnableMouse(nil)
 
 	local groupPets = self:SpawnHeader(
